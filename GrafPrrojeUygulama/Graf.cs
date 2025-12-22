@@ -82,6 +82,71 @@ namespace GraffProjesi   // Program.cs'deki namespace ile AYNI olsun
             return 1.0 / (1.0 + uzaklik); // İsterde verilen formül
         }
 
+        // -------- Heuristic fonksiyonu (A* için) --------
+        // Mevcut düğümden hedef düğüme tahmini maliyet
+        private double Heuristic(int current, int target)
+        {
+            return CalculateWeight(current, target);
+        }
+
+        // -------- A* Algoritması --------
+        // startId -> targetId arasındaki en kısa yolu hesaplar
+        public Dictionary<int, double> AStar(int startId, int targetId)
+        {
+            var openSet = new HashSet<int>();
+            var closedSet = new HashSet<int>();
+
+            var gScore = new Dictionary<int, double>(); // Gerçek maliyet
+            var fScore = new Dictionary<int, double>(); // g + h
+
+            foreach (var node in _adjacency.Keys)
+            {
+                gScore[node] = double.PositiveInfinity;
+                fScore[node] = double.PositiveInfinity;
+            }
+
+            gScore[startId] = 0;
+            fScore[startId] = Heuristic(startId, targetId);
+
+            openSet.Add(startId);
+
+            while (openSet.Count > 0)
+            {
+                // fScore'u en küçük olan düğümü seç
+                int current = openSet
+                    .OrderBy(n => fScore[n])
+                    .First();
+
+                if (current == targetId)
+                {
+                    // Hedefe ulaşıldı
+                    return gScore;
+                }
+
+                openSet.Remove(current);
+                closedSet.Add(current);
+
+                foreach (var neighbor in _adjacency[current])
+                {
+                    if (closedSet.Contains(neighbor))
+                        continue;
+
+                    double tentativeG = gScore[current] + CalculateWeight(current, neighbor);
+
+                    if (!openSet.Contains(neighbor))
+                        openSet.Add(neighbor);
+                    else if (tentativeG >= gScore[neighbor])
+                        continue;
+
+                    gScore[neighbor] = tentativeG;
+                    fScore[neighbor] = tentativeG + Heuristic(neighbor, targetId);
+                }
+            }
+
+            return gScore;
+        }
+
+
         // -------- Dijkstra (dinamik ağırlık ile) --------
         // Başlangıç düğümünden diğer düğümlere en kısa maliyetleri hesaplar
         public Dictionary<int, double> Dijkstra(int startId)
@@ -137,6 +202,65 @@ namespace GraffProjesi   // Program.cs'deki namespace ile AYNI olsun
             }
 
             return distances;
+        }
+
+        // -------- Welsh-Powell Graf Renklendirme --------
+        // Sonuç: <DüğümId, RenkNumarası>
+        public Dictionary<int, int> WelshPowellColoring()
+        {
+            // 1) Düğümleri degree'e göre büyükten küçüğe sırala
+            var nodesByDegree = _adjacency
+                .OrderByDescending(p => p.Value.Count)
+                .Select(p => p.Key)
+                .ToList();
+
+            var colorResult = new Dictionary<int, int>();
+            int currentColor = 1;
+
+            // 2) Tüm düğümler renklendirilene kadar devam et
+            foreach (var node in nodesByDegree)
+            {
+                if (colorResult.ContainsKey(node))
+                    continue;
+
+                // Bu düğüme yeni bir renk ata
+                colorResult[node] = currentColor;
+
+                // 3) Aynı rengi alabilecek diğer düğümleri kontrol et
+                foreach (var otherNode in nodesByDegree)
+                {
+                    if (colorResult.ContainsKey(otherNode))
+                        continue;
+
+                    // Komşu mu kontrolü
+                    bool komsuMu = _adjacency[node].Contains(otherNode) ||
+                                   _adjacency[otherNode].Contains(node);
+
+                    if (!komsuMu)
+                    {
+                        // Diğer düğüm, bu renkteki başka düğümlerle de komşu olmamalı
+                        bool conflict = false;
+
+                        foreach (var colored in colorResult.Where(x => x.Value == currentColor))
+                        {
+                            if (_adjacency[colored.Key].Contains(otherNode))
+                            {
+                                conflict = true;
+                                break;
+                            }
+                        }
+
+                        if (!conflict)
+                        {
+                            colorResult[otherNode] = currentColor;
+                        }
+                    }
+                }
+
+                currentColor++; // Yeni renk
+            }
+
+            return colorResult;
         }
 
 

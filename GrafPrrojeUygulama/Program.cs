@@ -68,6 +68,21 @@ namespace GraffProjesi
                 Console.WriteLine($"1 -> {pair.Key} maliyet: {pair.Value:F4}");
             }
 
+            Console.WriteLine("-----");
+            Console.WriteLine("A* (1 -> 5):");
+
+            var aStarSonuc = g.AStar(1, 5);
+            Console.WriteLine($"1 -> 5 maliyet: {aStarSonuc[5]:F4}");
+
+            Console.WriteLine("-----");
+            Console.WriteLine("Welsh-Powell Graf Renklendirme:");
+
+            var coloring = g.WelshPowellColoring();
+            foreach (var pair in coloring)
+            {
+                Console.WriteLine("Düğüm " + pair.Key + " -> Renk " + pair.Value);
+            }
+
             Console.ReadLine();    
         }
     }
