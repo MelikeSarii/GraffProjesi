@@ -108,9 +108,13 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
         // -------- Dosyadan graf yükleme --------
         // Her satır: from to
         // # ile başlayan satırlar yorum satırıdır
+
         public void LoadFromFile(string path)
         {
-            Clear();
+            // Grafı sıfırla (Clear metodu yoksa direkt _adjacency.Clear() kullan)
+            _adjacency.Clear();
+            // Eğer ayrıca Clear() diye bir metod yazmak istersen:
+            // public void Clear() { _adjacency.Clear(); }
 
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var fullPath = Path.Combine(baseDir, path);
@@ -132,11 +136,11 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
                 if (parts.Length < 2) continue;
 
                 if (int.TryParse(parts[0], out int from) &&
-                    int.TryParse(parts[1], out int to))
+                    int.TryParse(parts[1], out int to))   // <-- buradaki f gitti
                 {
                     AddEdge(from, to);
                 }
             }
         }
-    }
+        }
 }

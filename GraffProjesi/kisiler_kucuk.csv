@@ -1,0 +1,16 @@
+﻿Id;Ad;Rol;Sehir
+1;Ayşe;Depremzede;Hatay
+2;Mehmet;Depremzede;Hatay
+3;Ali;Depremzede;Kahramanmaraş
+4;Fatma;Depremzede;Adıyaman
+5;Elif;Gonullu;İstanbul
+6;Can;Gonullu;Ankara
+7;Zeynep;GonulluDoktor;Adana
+8;Murat;GonulluLojistik;Mersin
+9;AFAD Hatay Ofisi;Kurum;Hatay
+10;AHBAP Deposu İskenderun;Kurum;Hatay
+11;Psikolojik Destek Ekibi;Kurum;İstanbul
+12;Kızılay Kan Merkezi;Kurum;Gaziantep
+13;Belediye Sosyal Destek Birimi;Kurum;İstanbul
+14;Gençlik Merkezi Gönüllüleri;DestekEkibi;İstanbul
+15;Mobil Destek Aracı;DestekEkibi;Hatay

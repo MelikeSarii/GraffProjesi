@@ -49,10 +49,10 @@
     <Compile Include="AStarAlgorithm.cs" />
     <Compile Include="BFSAlgorithm.cs" />
     <Compile Include="Coloring.cs" />
+    <Compile Include="CsvPeopleLoader.cs" />
     <Compile Include="DFSAlgorithm.cs" />
     <Compile Include="DijkstraAlgorithm.cs" />
     <Compile Include="Edge.cs" />
-    <Compile Include="Graf.cs" />
     <Compile Include="IAlgorithm.cs" />
     <Compile Include="Graph.cs" />
     <Compile Include="MainForm.cs">
@@ -62,6 +62,7 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Node.cs" />
+    <Compile Include="Person.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -69,9 +70,23 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="graph.txt">
+    <Content Include="graph_buyuk.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="graph_kucuk.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="kisiler_buyuk.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="kisiler_kucuk.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

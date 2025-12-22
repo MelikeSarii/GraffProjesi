@@ -1,0 +1,76 @@
+﻿Id;Ad;Rol;Sehir
+1;Ayşe;Depremzede;Hatay
+2;Mehmet;Depremzede;Hatay
+3;Ali;Depremzede;Kahramanmaraş
+4;Fatma;Depremzede;Adıyaman
+5;Elif;Depremzede;Malatya
+6;Cem;Depremzede;Gaziantep
+7;Zeynep;Depremzede;Osmaniye
+8;Burak;Depremzede;Adana
+9;Murat;Depremzede;Şanlıurfa
+10;Derya;Depremzede;Kilis
+11;AFAD Hatay Ofisi;Kurum;Hatay
+12;AFAD Kahramanmaraş Ofisi;Kurum;Kahramanmaraş
+13;AFAD Gaziantep Ofisi;Kurum;Gaziantep
+14;Kızılay Kan Merkezi;Kurum;Gaziantep
+15;AHBAP Deposu İskenderun;Kurum;Hatay
+16;Psikolojik Destek Ekibi;Kurum;İstanbul
+17;Belediye Sosyal Destek Birimi;Kurum;İstanbul
+18;Gençlik Merkezi Gönüllüleri;DestekEkibi;İstanbul
+19;Lojistik Gönüllü Ekibi;DestekEkibi;Ankara
+20;Sağlık Gönüllüleri;DestekEkibi;İzmir
+21;Mobil Destek Aracı;DestekEkibi;Hatay
+22;AFAD Ankara Koordinasyon;Kurum;Ankara
+23;AFAD İstanbul Koordinasyon;Kurum;İstanbul
+24;AFAD İzmir Koordinasyon;Kurum;İzmir
+25;AFAD Bursa Koordinasyon;Kurum;Bursa
+26;AFAD Antalya Koordinasyon;Kurum;Antalya
+27;AFAD Mersin Koordinasyon;Kurum;Mersin
+28;AFAD Adana Koordinasyon;Kurum;Adana
+29;Kızılay Ankara;Kurum;Ankara
+30;Kızılay İstanbul;Kurum;İstanbul
+31;Kızılay Bursa;Kurum;Bursa
+32;Kızılay İzmir;Kurum;İzmir
+33;Kızılay Mersin;Kurum;Mersin
+34;Kızılay Adana;Kurum;Adana
+35;Acil Yardım Ekibi 1;Gonullu;Ankara
+36;Acil Yardım Ekibi 2;Gonullu;İzmir
+37;Acil Yardım Ekibi 3;Gonullu;Bursa
+38;Acil Yardım Ekibi 4;Gonullu;Antalya
+39;Psikososyal Destek Ekibi 1;Gonullu;İstanbul
+40;Psikososyal Destek Ekibi 2;Gonullu;Ankara
+41;Teknik Destek Ekibi 1;Gonullu;Ankara
+42;Teknik Destek Ekibi 2;Gonullu;İzmir
+43;Teknik Destek Ekibi 3;Gonullu;Mersin
+44;Teknik Destek Ekibi 4;Gonullu;İstanbul
+45;Sağlık Ekibi 1;Gonullu;İstanbul
+46;Sağlık Ekibi 2;Gonullu;İzmir
+47;Sağlık Ekibi 3;Gonullu;Antalya
+48;Sağlık Ekibi 4;Gonullu;Ankara
+49;Sağlık Ekibi 5;Gonullu;Bursa
+50;Sağlık Ekibi 6;Gonullu;Mersin
+51;Depo Koordinatörü 1;Kurum;Ankara
+52;Depo Koordinatörü 2;Kurum;İstanbul
+53;Depo Koordinatörü 3;Kurum;İzmir
+54;Depo Koordinatörü 4;Kurum;Bursa
+55;Depo Koordinatörü 5;Kurum;Antalya
+56;Depo Koordinatörü 6;Kurum;Mersin
+57;Ulaşım Ekibi 1;DestekEkibi;Hatay
+58;Ulaşım Ekibi 2;DestekEkibi;Gaziantep
+59;Ulaşım Ekibi 3;DestekEkibi;Kahramanmaraş
+60;Ulaşım Ekibi 4;DestekEkibi;Adana
+61;Ulaşım Ekibi 5;DestekEkibi;İstanbul
+62;Ulaşım Ekibi 6;DestekEkibi;Ankara
+63;Veri Analiz Ekibi;DestekEkibi;İstanbul
+64;Koordinasyon Merkezi 1;Kurum;Ankara
+65;Koordinasyon Merkezi 2;Kurum;İstanbul
+66;Koordinasyon Merkezi 3;Kurum;İzmir
+67;Koordinasyon Merkezi 4;Kurum;Mersin
+68;Koordinasyon Merkezi 5;Kurum;Adana
+69;Sosyal Medya Ekibi;DestekEkibi;İstanbul
+70;İletişim Ekibi;DestekEkibi;Ankara
+71;Basın Ekibi;DestekEkibi;İstanbul
+72;Bilgi Teknolojileri Ekibi;DestekEkibi;İzmir
+73;Gıda Dağıtım Ekibi;DestekEkibi;Adana
+74;Temizlik Ekibi;DestekEkibi;Hatay
+75;Giyim Dağıtım Ekibi;DestekEkibi;Mersin
