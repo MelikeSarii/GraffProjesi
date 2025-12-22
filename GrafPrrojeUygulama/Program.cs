@@ -7,11 +7,7 @@ namespace GraffProjesi
         static void Main(string[] args)
         {
             Graph g = new Graph();
-
-            g.AddEdge(1, 2);
-            g.AddEdge(1, 3);
-            g.AddEdge(2, 4);
-            g.AddEdge(3, 5);
+            g.LoadFromFile("graf.txt");
 
             Console.WriteLine("DFS (1'den başlayarak):");
             var dfsSonuc = g.DFS(1);

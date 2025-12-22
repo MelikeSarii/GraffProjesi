@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+
 
 
 namespace GraffProjesi   // Program.cs'deki namespace ile AYNI olsun
@@ -167,7 +170,68 @@ namespace GraffProjesi   // Program.cs'deki namespace ile AYNI olsun
                 .Select(p => p.Key)
                 .ToList();
         }
-     
+
+        // Grafı sıfırlamak için (isteğe bağlı)
+        public void Clear()
+        {
+            _adjacency.Clear();
+        }
+
+        // -------- Dosyadan graf yükleme --------
+        // Her satır: from to    (örnek: 1 2)
+        // # ile başlayan satırlar yorum satırıdır.
+        public void LoadFromFile(string path)
+        {
+            _adjacency.Clear();
+
+            // Çalışan .exe'nin klasörünü al
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var fullPath = Path.Combine(baseDir, path);
+
+            // Eğer bu isimle dosya yoksa, bir de ".txt" eklenmiş halini dene
+            if (!File.Exists(fullPath))
+            {
+                // Örn: graf.txt -> graf.txt.txt durumu için
+                var altPath = fullPath + ".txt";
+
+                if (File.Exists(altPath))
+                {
+                    fullPath = altPath; // onu kullan
+                }
+                else
+                {
+                    throw new FileNotFoundException(
+                        "Graf dosyası bulunamadı: " + fullPath, fullPath);
+                }
+            }
+
+            foreach (var rawLine in File.ReadAllLines(fullPath))
+            {
+                var line = rawLine.Trim();
+
+                // Boş satır / yorum satırı
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (line.StartsWith("#")) continue;
+
+                var parts = line.Split(
+                    new[] { ' ', '\t', ';', ',' },
+                    StringSplitOptions.RemoveEmptyEntries);
+
+                if (parts.Length < 2) continue;
+
+                if (int.TryParse(parts[0], out int from) &&
+                    int.TryParse(parts[1], out int to))
+                {
+                    AddEdge(from, to);
+                }
+            }
+        }
+
+
+
+
+
+
 
 
 
