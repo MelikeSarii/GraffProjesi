@@ -7,6 +7,14 @@ using System.Linq;
 
 namespace GraffProjesi   // Program.cs'deki namespace ile AYNI olsun
 {
+    public class NodeFeature // Düğüm özelliklerini tutan sınıf
+    {
+        public int Id { get; set; }
+        public double Aktiflik { get; set; }
+        public double Etkilesim { get; set; }
+        public int BaglantiSayisi { get; set; }
+    }
+
     public class Graph
     {
         private Dictionary<int, List<int>> _adjacency;//komşuluk listesi kısmı
@@ -18,6 +26,8 @@ namespace GraffProjesi   // Program.cs'deki namespace ile AYNI olsun
         //  2      [1]...
 
         //_adjacency --> Dictionary<int, List<int>> tipinde bir alan tanımladık
+        private Dictionary<int, NodeFeature> _nodeFeatures; //Düğümün sayısal özellikleri için
+
 
         public Graph()//kurucu metot
         {
@@ -25,6 +35,7 @@ namespace GraffProjesi   // Program.cs'deki namespace ile AYNI olsun
             //Bellekte yeni bir Dictionary<int, List<int>> yaratıp adresini alanıma atadık
             _adjacency = new Dictionary<int, List<int>>();
             //yeni graf oluştuğunda içinde düğüm bağlantı falan olmayan yeni bi sözlük oluşturuyo
+            _nodeFeatures = new Dictionary<int, NodeFeature>(); // Düğümün özellik paketleri için
         }
 
         public void AddNode(int id)// eklenecek olan düğümün id'si
@@ -35,6 +46,99 @@ namespace GraffProjesi   // Program.cs'deki namespace ile AYNI olsun
                 //sözlüğe id numaralı düğüm için boş komşu listesi açılır
             }
         }
+
+        public void AddNodeFeature(int id, double aktiflik, double etkilesim, int baglantiSayisi) // düğüm özelliklerini ekleme
+        {
+            _nodeFeatures[id] = new NodeFeature
+            {
+                Id = id,
+                Aktiflik = aktiflik,
+                Etkilesim = etkilesim,
+                BaglantiSayisi = baglantiSayisi
+            };
+        }
+
+        // -------- Dinamik ağırlık hesaplama -------- İsterlerde verildi
+        // İki düğüm arasındaki maliyeti (kenar ağırlığını) hesaplar
+        private double CalculateWeight(int i, int j)
+        {
+            // Güvenlik kontrolü: özellikler yoksa hata fırlat
+            if (!_nodeFeatures.ContainsKey(i) || !_nodeFeatures.ContainsKey(j))
+                throw new Exception("Düğüm özellikleri eksik!");
+
+            var ni = _nodeFeatures[i];
+            var nj = _nodeFeatures[j];
+
+            double farkAktiflik = ni.Aktiflik - nj.Aktiflik;
+            double farkEtkilesim = ni.Etkilesim - nj.Etkilesim;
+            double farkBaglanti = ni.BaglantiSayisi - nj.BaglantiSayisi;
+
+            double uzaklik = Math.Sqrt(
+                farkAktiflik * farkAktiflik +
+                farkEtkilesim * farkEtkilesim +
+                farkBaglanti * farkBaglanti
+            );
+
+            return 1.0 / (1.0 + uzaklik); // İsterde verilen formül
+        }
+
+        // -------- Dijkstra (dinamik ağırlık ile) --------
+        // Başlangıç düğümünden diğer düğümlere en kısa maliyetleri hesaplar
+        public Dictionary<int, double> Dijkstra(int startId)
+        {
+            var distances = new Dictionary<int, double>();
+            var visited = new HashSet<int>();
+
+            // Başlangıçta tüm mesafeleri sonsuz yap
+            foreach (var node in _adjacency.Keys)
+            {
+                distances[node] = double.PositiveInfinity;
+            }
+
+            // Başlangıç düğümünün mesafesi 0
+            distances[startId] = 0;
+
+            while (visited.Count < _adjacency.Count)
+            {
+                int current = -1;
+                double minDistance = double.PositiveInfinity;
+
+                // Ziyaret edilmemiş en küçük mesafeli düğümü bul
+                foreach (var pair in distances)
+                {
+                    if (!visited.Contains(pair.Key) && pair.Value < minDistance)
+                    {
+                        minDistance = pair.Value;
+                        current = pair.Key;
+                    }
+                }
+
+                // Ulaşılabilecek düğüm kalmadıysa çık
+                if (current == -1)
+                    break;
+
+                visited.Add(current);
+
+                // Komşuların mesafelerini güncelle
+                foreach (var neighbor in _adjacency[current])
+                {
+                    if (visited.Contains(neighbor))
+                        continue;
+
+                    // Dinamik ağırlık burada hesaplanıyor
+                    double weight = CalculateWeight(current, neighbor);
+                    double newDistance = distances[current] + weight;
+
+                    if (newDistance < distances[neighbor])
+                    {
+                        distances[neighbor] = newDistance;
+                    }
+                }
+            }
+
+            return distances;
+        }
+
 
         public void AddEdge(int from, int to)
         {
