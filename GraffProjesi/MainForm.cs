@@ -38,6 +38,12 @@ namespace GraffProjesi
                 _graph.LoadFromFile("graph_kucuk.txt");
 
                 _people = CsvPeopleLoader.Load("kisiler_kucuk.csv");
+                // ListBox'u doldur
+                lstPeople.Items.Clear();
+                foreach (var p in _people)
+                {
+                    lstPeople.Items.Add($"{p.Id} - {p.AdSoyad} ({p.Rol}) [{p.Sehir}]");
+                }
 
                 MessageBox.Show(
                      $"Küçük graf başarıyla yüklendi.\n" +
@@ -87,12 +93,53 @@ namespace GraffProjesi
                 $"Rol: {person.Rol}\n" +
                 $"Güven Skoru: {person.GuvenSkoru}\n" +
                 $"Aile Sayısı: {person.AileSayisi}\n" +
-                $"İhtiyaç (Gıda): {person.IhtiyacCida}\n" +
+                $"İhtiyaç (Gıda): {person.IhtiyacCadir}\n" +
                 $"İhtiyaç (PsikoSosyal): {person.IhtiyacPsikososyal}",
                 "Kişi Bilgisi",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
 
+        private void lstPeople_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+            if (lstPeople.SelectedIndex == -1 || _people == null)
+                return;
+
+            var selectedText = lstPeople.SelectedItem?.ToString();
+            if (string.IsNullOrWhiteSpace(selectedText))
+                return;
+
+            // Soldaki "Id" kısmını alıyoruz: "1 - Ayşe (Depremzede) [Hatay]" → "1"
+            var idPart = selectedText.Split('-')[0].Trim();
+
+            if (!int.TryParse(idPart, out int id))
+                return;
+
+            var person = _people.FirstOrDefault(p => p.Id == id);
+            if (person == null)
+                return;
+
+            // İhtiyaçları metne çevir
+            var ihtiyaclar = new List<string>();
+            if (person.IhtiyacCadir) ihtiyaclar.Add("Çadır");
+            if (person.IhtiyacGida) ihtiyaclar.Add("Gıda");
+            if (person.IhtiyacGiysi) ihtiyaclar.Add("Giysi");
+            if (person.IhtiyacPsikososyal) ihtiyaclar.Add("Psikososyal destek");
+
+            var ihtiyacMetni = ihtiyaclar.Count > 0
+                ? string.Join(", ", ihtiyaclar)
+                : "Belirtilmemiş";
+
+            MessageBox.Show(
+                $"Ad Soyad: {person.AdSoyad}\n" +
+                $"Şehir: {person.Sehir}\n" +
+                $"Rol: {person.Rol}\n" +
+                $"Güven Skoru: {person.GuvenSkoru}\n" +
+                $"Aile Sayısı: {person.AileSayisi}\n" +
+                $"İhtiyaçlar: {ihtiyacMetni}",
+                "Kişi Bilgisi",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
     }
 }

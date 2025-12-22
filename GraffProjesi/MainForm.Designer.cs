@@ -35,10 +35,11 @@
             // 
             this.lstPeople.FormattingEnabled = true;
             this.lstPeople.ItemHeight = 16;
-            this.lstPeople.Location = new System.Drawing.Point(122, 304);
+            this.lstPeople.Location = new System.Drawing.Point(12, 5);
             this.lstPeople.Name = "lstPeople";
-            this.lstPeople.Size = new System.Drawing.Size(120, 84);
+            this.lstPeople.Size = new System.Drawing.Size(173, 452);
             this.lstPeople.TabIndex = 0;
+            this.lstPeople.SelectedIndexChanged += new System.EventHandler(this.lstPeople_SelectedIndexChanged_1);
             // 
             // MainForm
             // 

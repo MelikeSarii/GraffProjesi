@@ -1,86 +1,88 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
+using System.Text;
+using System.Globalization;
 
 namespace GraffProjesi
 {
     public static class CsvPeopleLoader
     {
-        // kisiler_kucuk.csv veya kisiler_buyuk.csv dosyasını okur
-        // CSV formatı (noktalı virgül ile):
-        // Id;AdSoyad;Sehir;Rol;Yas;GuvenSkoru;GonulluSaat;AileSayisi;Cadir;Gida;Giysi;Psiko
         public static List<Person> Load(string fileName)
         {
             var people = new List<Person>();
 
+            // .exe'nin çalıştığı klasör
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var fullPath = Path.Combine(baseDir, fileName);
 
             if (!File.Exists(fullPath))
-                throw new FileNotFoundException("Kişi CSV dosyası bulunamadı.", fullPath);
+                throw new FileNotFoundException("Kişi CSV dosyası bulunamadı", fullPath);
 
-            var lines = File.ReadAllLines(fullPath);
+            bool firstLine = true;
 
-            // 0. satır başlık olduğu için 1’den başlıyoruz
-            for (int i = 1; i < lines.Length; i++)
+            foreach (var rawLine in File.ReadAllLines(fullPath, Encoding.UTF8))
             {
-                var line = lines[i].Trim();
-                if (string.IsNullOrWhiteSpace(line))
+                var line = rawLine.Trim();
+
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (line.StartsWith("#")) continue;
+
+                // İlk satır başlık satırı ise atla
+                if (firstLine && (line.StartsWith("Id;") || line.StartsWith("Id,")))
+                {
+                    firstLine = false;
+                    continue;
+                }
+                firstLine = false;
+
+                // ; veya , ile ayrılmış olabilir
+                var parts = line.Split(new[] { ';', ',' }, StringSplitOptions.None);
+
+                // Id;AdSoyad;Sehir;Rol;Yas;GuvenSkoru;AileSayisi;IhtiyacCadir;IhtiyacGida;IhtiyacGiysi;IhtiyacPsikososyal
+                if (parts.Length < 11)
                     continue;
 
-                var parts = line.Split(';');
-                if (parts.Length < 12)
-                    continue; // eksik satır
+                // Id
+                if (!int.TryParse(parts[0].Trim(), out int id))
+                    continue;
 
-                var p = new Person();
+                string adSoyad = parts[1].Trim();
+                string sehir = parts[2].Trim();
+                string rol = parts[3].Trim();
 
-                int tempInt;
-                double tempDouble;
+                int.TryParse(parts[4].Trim(), out int yas);
 
-                if (int.TryParse(parts[0], out tempInt))
-                    p.Id = tempInt;
+                // 0.8 veya 0,8 yazılmış olabilir -> noktaya çevir
+                string guvenStr = parts[5].Trim().Replace(',', '.');
+                double.TryParse(guvenStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double guvenSkoru);
 
-                p.AdSoyad = parts[1].Trim();
-                p.Sehir = parts[2].Trim();
-                p.Rol = parts[3].Trim();
+                int.TryParse(parts[6].Trim(), out int aileSayisi);
 
-                if (int.TryParse(parts[4], out tempInt))
-                    p.Yas = tempInt;
+                bool ihtiyacCadir = parts[7].Trim() == "1";
+                bool ihtiyacGida = parts[8].Trim() == "1";
+                bool ihtiyacGiysi = parts[9].Trim() == "1";
+                bool ihtiyacPsikososyal = parts[10].Trim() == "1";
 
-                if (double.TryParse(parts[5],
-                        NumberStyles.Any,
-                        CultureInfo.InvariantCulture,
-                        out tempDouble))
+                var person = new Person
                 {
-                    p.GuvenSkoru = tempDouble;
-                }
+                    Id = id,
+                    AdSoyad = adSoyad,
+                    Sehir = sehir,
+                    Rol = rol,
+                    Yas = yas,
+                    GuvenSkoru = guvenSkoru,
+                    AileSayisi = aileSayisi,
+                    IhtiyacCadir = ihtiyacCadir,
+                    IhtiyacGida = ihtiyacGida,
+                    IhtiyacGiysi = ihtiyacGiysi,
+                    IhtiyacPsikososyal = ihtiyacPsikososyal
+                };
 
-                if (int.TryParse(parts[6], out tempInt))
-                    p.GonulluSaat = tempInt;
-
-                if (int.TryParse(parts[7], out tempInt))
-                    p.AileSayisi = tempInt;
-
-                p.IhtiyacCadir = ToBool(parts[8]);
-                p.IhtiyacGida = ToBool(parts[9]);
-                p.IhtiyacGiysi = ToBool(parts[10]);
-                p.IhtiyacPsikososyal = ToBool(parts[11]);
-
-                people.Add(p);
+                people.Add(person);
             }
 
             return people;
-        }
-
-        // "1", "true", "evet", "x" gibi değerleri true kabul ediyoruz
-        private static bool ToBool(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return false;
-
-            value = value.Trim().ToLowerInvariant();
-            return value == "1" || value == "true" || value == "evet" || value == "x";
         }
     }
 }

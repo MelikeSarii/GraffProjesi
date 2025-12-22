@@ -1,16 +1,16 @@
-﻿Id;Ad;Rol;Sehir
-1;Ayşe;Depremzede;Hatay
-2;Mehmet;Depremzede;Hatay
-3;Ali;Depremzede;Kahramanmaraş
-4;Fatma;Depremzede;Adıyaman
-5;Elif;Gonullu;İstanbul
-6;Can;Gonullu;Ankara
-7;Zeynep;GonulluDoktor;Adana
-8;Murat;GonulluLojistik;Mersin
-9;AFAD Hatay Ofisi;Kurum;Hatay
-10;AHBAP Deposu İskenderun;Kurum;Hatay
-11;Psikolojik Destek Ekibi;Kurum;İstanbul
-12;Kızılay Kan Merkezi;Kurum;Gaziantep
-13;Belediye Sosyal Destek Birimi;Kurum;İstanbul
-14;Gençlik Merkezi Gönüllüleri;DestekEkibi;İstanbul
-15;Mobil Destek Aracı;DestekEkibi;Hatay
+﻿Id;AdSoyad;Sehir;Rol;Yas;GuvenSkoru;AileSayisi;IhtiyacCadir;IhtiyacGida;IhtiyacGiysi;IhtiyacPsikososyal
+1;Ayşe Yılmaz;Hatay;Depremzede;32;0.2;4;1;1;1;1
+2;Mehmet Demir;İzmir;Gönüllü;28;0.9;1;0;1;0;0
+3;Selin Kara;İstanbul;Koordinatör;35;0.95;3;0;1;0;1
+4;Ali Çetin;Kahramanmaraş;Depremzede;41;0.3;5;1;1;1;0
+5;Zeynep Aksoy;Ankara;Gönüllü;26;0.85;2;0;1;0;0
+6;Murat Yıldız;Hatay;Depremzede;29;0.25;3;1;1;0;0
+7;Elif Öztürk;Adıyaman;Depremzede;37;0.4;6;1;1;1;1
+8;Can Aydın;İstanbul;Gönüllü;30;0.92;1;0;1;0;0
+9;Hülya Şen;Gaziantep;Koordinatör;39;0.88;2;0;1;0;1
+10;Burak Arslan;Mersin;Gönüllü;27;0.8;1;0;1;1;0
+11;Fatma Kaya;Hatay;Depremzede;33;0.35;4;1;1;1;1
+12;Yusuf Polat;Malatya;Depremzede;45;0.22;5;1;1;0;0
+13;Deniz Er;İstanbul;Gönüllü;24;0.9;1;0;1;0;0
+14;Gamze Uçar;Adana;Depremzede;31;0.28;3;1;1;1;0
+15;Kerem Koç;Ankara;Koordinatör;38;0.93;2;0;1;0;1
