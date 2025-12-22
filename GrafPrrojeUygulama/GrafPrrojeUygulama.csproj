@@ -43,7 +43,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Algorithm.cs" />
+    <Compile Include="AStarAlgorithm.cs" />
+    <Compile Include="BFSAlgorithm.cs" />
+    <Compile Include="Coloring.cs" />
+    <Compile Include="DFSAlgorithm.cs" />
+    <Compile Include="DijkstraAlgorithm.cs" />
+    <Compile Include="Edge.cs" />
     <Compile Include="Graf.cs" />
+    <Compile Include="IAlgorithm.cs" />
+    <Compile Include="Graph.cs" />
+    <Compile Include="Node.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -51,8 +61,8 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="graf.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="graph.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
