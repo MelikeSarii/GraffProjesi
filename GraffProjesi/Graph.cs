@@ -87,6 +87,21 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
             return new List<Node>();
         }
 
+        // ID parametresi alan versiyon (MainForm'daki çizim için kolaylık sağlar)
+        public List<int> GetNeighbors(int id)
+        {
+            if (!_nodes.ContainsKey(id)) return new List<int>();
+
+            Node node = _nodes[id];
+            if (_adjacency.ContainsKey(node))
+            {
+                // Komşu Node'ların sadece ID'lerini listeye çevirip döndürür
+                return _adjacency[node].Select(n => n.Id).ToList();
+            }
+
+            return new List<int>();
+        }
+
         // -------- Degree --------
 
         public int GetDegree(Node node)
@@ -142,5 +157,38 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
                 }
             }
         }
+        public List<Node> GetTop5DegreeNodes()
+        {
+            if (_nodes == null || _nodes.Count == 0)
+                return new List<Node>();
+
+            // Düğümleri GetDegree metoduna göre büyükten küçüğe sıralayıp ilk 5'ini alır
+            return _nodes.Values
+                .OrderByDescending(node => GetDegree(node))
+                .Take(5)
+                .ToList();
         }
+
+        public double CalculateWeight(int iId, int jId)
+        {
+            if (!_nodes.ContainsKey(iId) || !_nodes.ContainsKey(jId))
+                return 0;
+
+            Node ni = _nodes[iId];
+            Node nj = _nodes[jId];
+
+            // Görseldeki formül: 1 / (1 + sqrt( (A1-A2)^2 + (E1-E2)^2 + (B1-B2)^2 ))
+            double farkAktiflik = ni.Aktiflik - nj.Aktiflik;
+            double farkEtkilesim = ni.Etkilesim - nj.Etkilesim;
+            double farkBaglanti = ni.BaglantiSayisi - nj.BaglantiSayisi;
+
+            double uzaklik = Math.Sqrt(
+                farkAktiflik * farkAktiflik +
+                farkEtkilesim * farkEtkilesim +
+                farkBaglanti * farkBaglanti
+            );
+
+            return 1.0 / (1.0 + uzaklik);
+        }
+    }
 }
