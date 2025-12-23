@@ -17,7 +17,6 @@ namespace GraffProjesi
 {
     public partial class MainForm : Form
     {
-        // Form içinde kullanacağımız graf nesnesi
         private Graph _graph;
         private List<Person> _people;
 
@@ -25,28 +24,24 @@ namespace GraffProjesi
         {
             InitializeComponent();
         }
-        
-        // Form açılırken çalışacak
+
+        // Form açılır açılmaz KÜÇÜK grafı yükle
         private void MainForm_Load(object sender, EventArgs e)
+        {
+            LoadData("graph_kucuk.txt", "kisiler_kucuk.csv","Küçük Graf");
+        }
+        private void LoadData(string graphFile, string peopleFile, string description)
         {
             try
             {
                 _graph = new Graph();
+                _graph.LoadFromFile(graphFile);
 
-                // Küçük grafı yükle (15 kişilik olan)
-                // İstersen bunu "graph.txt" veya "graph_buyuk.txt" yapabilirsin
-                _graph.LoadFromFile("graph_kucuk.txt");
-
-                _people = CsvPeopleLoader.Load("kisiler_kucuk.csv");
-                // ListBox'u doldur
-                lstPeople.Items.Clear();
-                foreach (var p in _people)
-                {
-                    lstPeople.Items.Add($"{p.Id} - {p.AdSoyad}");
-                }
+                _people = CsvPeopleLoader.Load(peopleFile);
+                FillPeopleList();
 
                 MessageBox.Show(
-                     $"Küçük graf başarıyla yüklendi.\n" +
+                    $"{description} başarıyla yüklendi.\n" +
                     $"Kişi sayısı: {_people.Count}",
                     "Yükleme Başarılı",
                     MessageBoxButtons.OK,
@@ -55,12 +50,56 @@ namespace GraffProjesi
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Graf yüklenirken hata oluştu:\n" + ex.Message,
+                    $"{description} yüklenirken hata oluştu:\n" + ex.Message,
                     "Hata",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
         }
+
+
+        // Küçük graf butonu
+        private void btnLoadSmall_Click(object sender, EventArgs e)
+        {
+            LoadData("graph_kucuk.txt", "kisiler_kucuk.csv");
+        }
+
+        // Büyük graf butonu
+        private void btnLoadBig_Click(object sender, EventArgs e)
+        {
+            LoadData("graph_buyuk.txt", "kisiler_buyuk.csv");
+        }
+
+        // Ortak yükleme metodu
+        private void LoadData(string graphFile, string peopleFile)
+        {
+            try
+            {
+                _graph = new Graph();
+                _graph.LoadFromFile(graphFile);
+
+                _people = CsvPeopleLoader.Load(peopleFile);
+
+                FillPeopleList();
+
+                MessageBox.Show(
+                    $"{graphFile} dosyasından graf başarıyla yüklendi.\n" +
+                    $"Kişi sayısı: {_people.Count}",
+                    "Yükleme Başarılı",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Veriler yüklenirken hata oluştu:\n" + ex.Message,
+                    "Hata",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        // ListBox'ı doldur
         private void FillPeopleList()
         {
             lstPeople.Items.Clear();
@@ -76,9 +115,9 @@ namespace GraffProjesi
                 lstPeople.Items.Add($"{p.Id} - {p.AdSoyad}");
             }
         }
-       
 
-        private void lstPeople_SelectedIndexChanged_1(object sender, EventArgs e)
+        // ListBox'tan kişi seçilince detay göster
+        private void lstPeople_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lstPeople.SelectedIndex == -1 || _people == null)
                 return;
@@ -87,9 +126,7 @@ namespace GraffProjesi
             if (string.IsNullOrWhiteSpace(selectedText))
                 return;
 
-            // Soldaki "Id" kısmını alıyoruz: "1 - Ayşe (Depremzede) [Hatay]" → "1"
             var idPart = selectedText.Split('-')[0].Trim();
-
             if (!int.TryParse(idPart, out int id))
                 return;
 
@@ -97,12 +134,23 @@ namespace GraffProjesi
             if (person == null)
                 return;
 
-
             MessageBox.Show(
-             $"Id: {person.Id}\nAd Soyad: {person.AdSoyad}",
+                $"Id: {person.Id}\nAd Soyad: {person.AdSoyad}",
                 "Kişi Bilgisi",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            LoadData("graph_kucuk.txt", "kisiler_kucuk.csv", "Küçük graf");
+
+        }
+
+        private void btnBuyukGraf_Click(object sender, EventArgs e)
+        {
+            LoadData("graph_buyuk.txt", "kisiler_buyuk.csv", "Büyük graf");
+
         }
     }
 }
