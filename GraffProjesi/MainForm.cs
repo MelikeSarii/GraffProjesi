@@ -42,7 +42,7 @@ namespace GraffProjesi
                 lstPeople.Items.Clear();
                 foreach (var p in _people)
                 {
-                    lstPeople.Items.Add($"{p.Id} - {p.AdSoyad} ({p.Rol}) [{p.Sehir}]");
+                    lstPeople.Items.Add($"{p.Id} - {p.AdSoyad}");
                 }
 
                 MessageBox.Show(
@@ -73,32 +73,10 @@ namespace GraffProjesi
 
             foreach (var p in _people)
             {
-                lstPeople.Items.Add($"{p.Id} - {p.AdSoyad} ({p.Rol}) [{p.Sehir}]");
+                lstPeople.Items.Add($"{p.Id} - {p.AdSoyad}");
             }
         }
-        private void lstPeople_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (lstPeople.SelectedIndex == -1 || _people == null) return;
-
-            var selectedText = lstPeople.SelectedItem.ToString();
-            if (!int.TryParse(selectedText.Split('-')[0].Trim(), out int id))
-                return;
-
-            var person = _people.FirstOrDefault(p => p.Id == id);
-            if (person == null) return;
-
-            MessageBox.Show(
-                $"Ad Soyad: {person.AdSoyad}\n" +
-                $"Şehir: {person.Sehir}\n" +
-                $"Rol: {person.Rol}\n" +
-                $"Güven Skoru: {person.GuvenSkoru}\n" +
-                $"Aile Sayısı: {person.AileSayisi}\n" +
-                $"İhtiyaç (Gıda): {person.IhtiyacCadir}\n" +
-                $"İhtiyaç (PsikoSosyal): {person.IhtiyacPsikososyal}",
-                "Kişi Bilgisi",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-        }
+       
 
         private void lstPeople_SelectedIndexChanged_1(object sender, EventArgs e)
         {
@@ -119,24 +97,9 @@ namespace GraffProjesi
             if (person == null)
                 return;
 
-            // İhtiyaçları metne çevir
-            var ihtiyaclar = new List<string>();
-            if (person.IhtiyacCadir) ihtiyaclar.Add("Çadır");
-            if (person.IhtiyacGida) ihtiyaclar.Add("Gıda");
-            if (person.IhtiyacGiysi) ihtiyaclar.Add("Giysi");
-            if (person.IhtiyacPsikososyal) ihtiyaclar.Add("Psikososyal destek");
-
-            var ihtiyacMetni = ihtiyaclar.Count > 0
-                ? string.Join(", ", ihtiyaclar)
-                : "Belirtilmemiş";
 
             MessageBox.Show(
-                $"Ad Soyad: {person.AdSoyad}\n" +
-                $"Şehir: {person.Sehir}\n" +
-                $"Rol: {person.Rol}\n" +
-                $"Güven Skoru: {person.GuvenSkoru}\n" +
-                $"Aile Sayısı: {person.AileSayisi}\n" +
-                $"İhtiyaçlar: {ihtiyacMetni}",
+             $"Id: {person.Id}\nAd Soyad: {person.AdSoyad}",
                 "Kişi Bilgisi",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
