@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.VisualBasic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Globalization;
 
 using GraffProjesi;          // Graph sınıfı için
 using System.IO;                 // gerekirse
@@ -33,6 +35,18 @@ namespace GraffProjesi
         {
             LoadData("graph_kucuk.txt", "kisiler_kucuk.csv","Küçük Graf");
         }
+
+        private enum EditMode
+        {
+            None,
+            AddNode,
+            DeleteNode,
+            UpdateNode,
+            AddEdge,
+            DeleteEdge
+        }
+
+        private EditMode _currentMode = EditMode.None;
 
         private void LoadData(string graphFile, string peopleFile, string description)
         {
@@ -114,8 +128,8 @@ namespace GraffProjesi
                         g.DrawLine(Pens.Gray, p1, p2); // Kenarı çiz
 
                         // Dinamik ağırlığı hesapla ve çizginin ortasına yaz
-                        double weight = _graph.CalculateWeight(fromId, toId);
-                        g.DrawString(weight.ToString("F2"), this.Font, Brushes.Red, (p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2);
+                        //double weight = _graph.CalculateWeight(fromId, toId);
+                        //g.DrawString(weight.ToString("F2"), this.Font, Brushes.Red, (p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2);
                     }
                 }
             }
@@ -125,12 +139,18 @@ namespace GraffProjesi
             {       // Mavi yuvarlaklar çiziyoruz
                 g.FillEllipse(Brushes.SkyBlue, node.Value.X - 15, node.Value.Y - 15, 30, 30);
                 g.DrawEllipse(Pens.Black, node.Value.X - 15, node.Value.Y - 15, 30, 30);
-                    // İçine id numarası yazıyoruz
-                g.DrawString(node.Key.ToString(), this.Font, Brushes.Black, node.Value.X - 8, node.Value.Y - 8);
+
+                // ID yazıyoruz
+                g.DrawString(
+                    node.Key.ToString(),
+                    this.Font,
+                    Brushes.Black,
+                    node.Value.X - 8,
+                    node.Value.Y - 8
+                );
             }
         }
-
-            private void UpdateTopNodesTable()
+        private void UpdateTopNodesTable()
             {
             if (_graph == null) return;// Eğer graf yüklenmemişse işlem yapma
 
@@ -145,6 +165,318 @@ namespace GraffProjesi
                 dgvTopNodes.Rows.Add(nodeId, degree); 
             }
         }
+
+        // DÜĞÜM EKLEME
+        private int _nodeCounter; // yeni eklenecek düğümlerin id numarası
+        private void AddNodeAt(Point location)
+        {
+            if (_graph == null || _people == null)
+                return;
+
+            var result = AskNodeInfo();
+            if (result == null)
+                return;
+
+            string name = result.Value.name;
+            double aktiflik = result.Value.aktiflik;
+
+            // ID'yi belirle: Eğer liste boşsa 1, değilse son kişiden devam ettir
+            int id = (_people != null && _people.Any()) ? _people.Max(p => p.Id) + 1 : 1;
+
+            _graph.AddNode(id, aktiflik, 0, 0);  // Graph'a ekle
+            
+            _nodePositions[id] = location; // Çiz
+    
+            _people.Add(new Person // Listeye ekle
+            {
+                Id = id,
+                Name = name
+            });
+
+            FillPeopleList();
+            pbCanvas.Invalidate();
+
+            txtTerminal.AppendText($"Düğüm {id} - {name} eklendi.\r\n");
+        }
+
+        private (string name, double aktiflik)? AskNodeInfo() // Yeni düğüme bilgi girme
+        {
+            using (Form prompt = new Form())
+            {
+                prompt.Width = 300;
+                prompt.Height = 220;
+                prompt.Text = "Yeni Düğüm";
+
+                Label lblName = new Label()
+                {
+                    Left = 10,
+                    Top = 10,
+                    Text = "Kişi adı:"
+                };
+
+                TextBox txtName = new TextBox()
+                {
+                    Left = 10,
+                    Top = 35,
+                    Width = 260
+                };
+
+                Label lblAktiflik = new Label()
+                {
+                    Left = 10,
+                    Top = 70,
+                    Text = "Aktiflik (0–1):"
+                };
+
+                TextBox txtAktiflik = new TextBox()
+                {
+                    Left = 10,
+                    Top = 95,
+                    Width = 260,
+                    Text = "0.5"
+                };
+
+                Button btnOk = new Button()
+                {
+                    Text = "Tamam",
+                    Left = 200,
+                    Width = 70,
+                    Top = 140,
+                    DialogResult = DialogResult.OK
+                };
+
+                prompt.Controls.Add(lblName);
+                prompt.Controls.Add(txtName);
+                prompt.Controls.Add(lblAktiflik);
+                prompt.Controls.Add(txtAktiflik);
+                prompt.Controls.Add(btnOk);
+
+                prompt.AcceptButton = btnOk;
+                prompt.StartPosition = FormStartPosition.CenterParent;
+
+                if (prompt.ShowDialog() != DialogResult.OK)
+                    return null;
+
+                if (string.IsNullOrWhiteSpace(txtName.Text)) // İsim boş olduğunda
+                {
+                    MessageBox.Show("İsim boş olamaz.");
+                    return null;
+                }
+
+                if (!double.TryParse(
+                        txtAktiflik.Text.Replace(',', '.'),
+                        NumberStyles.Any,
+                        CultureInfo.InvariantCulture,
+                        out double aktiflik)
+                    || aktiflik < 0 || aktiflik > 1)
+                {
+                    MessageBox.Show("Aktiflik 0 ile 1 arasında olmalıdır.");
+                    return null;
+                }
+
+                return (txtName.Text.Trim(), aktiflik);
+            }
+        }
+
+
+        // DÜĞÜM SİLME
+        private void DeleteNode(int nodeId)
+        {
+            var result = MessageBox.Show(
+                $"Düğüm {nodeId} silinsin mi?",
+                "Onay",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes)
+                return;
+            //Listeden ismi bul
+            var person = _people.FirstOrDefault(p => p.Id == nodeId);
+            string name = person?.Name ?? "Bilinmeyen";
+
+            // Graph içinden sil
+            _graph.RemoveNode(nodeId);
+
+            // Canvas pozisyonu sil
+            _nodePositions.Remove(nodeId);
+
+            // Listeden sil
+            // var person = _people.FirstOrDefault(p => p.Id == nodeId);
+            if (person != null)
+                _people.Remove(person);
+
+            FillPeopleList();
+            UpdateTopNodesTable();
+            pbCanvas.Invalidate();
+
+            txtTerminal.AppendText($"Düğüm {nodeId} - {name} silindi.\r\n");
+        }
+
+        // DÜĞÜM GÜNCELLEME
+        private void UpdateNode(int nodeId)
+        {
+            var person = _people.FirstOrDefault(p => p.Id == nodeId);
+            if (person == null) return;
+
+            string oldName = person.Name;
+
+            string newName = AskNodeNameWithDefault(oldName);
+            if (string.IsNullOrWhiteSpace(newName) || newName == oldName)
+                return;
+
+            person.Name = newName;
+
+            FillPeopleList();
+            pbCanvas.Invalidate();
+
+            txtTerminal.AppendText($"{nodeId} - {oldName} → {newName} güncellendi.\r\n");
+        }
+        private string AskNodeNameWithDefault(string defaultName) //mecvut ismi görerek düzenleme
+        {
+            using (Form prompt = new Form())
+            {
+                prompt.Width = 300;
+                prompt.Height = 150;
+                prompt.Text = "Düğüm Güncelle";
+
+                Label lbl = new Label() { Left = 10, Top = 10, Text = "Yeni isim:" };
+                TextBox txt = new TextBox()
+                {
+                    Left = 10,
+                    Top = 35,
+                    Width = 260,
+                    Text = defaultName
+                };
+
+                Button btnOk = new Button()
+                {
+                    Text = "Güncelle",
+                    Left = 200,
+                    Width = 70,
+                    Top = 70,
+                    DialogResult = DialogResult.OK
+                };
+
+                prompt.Controls.Add(lbl);
+                prompt.Controls.Add(txt);
+                prompt.Controls.Add(btnOk);
+                prompt.AcceptButton = btnOk;
+                prompt.StartPosition = FormStartPosition.CenterParent;
+
+                return prompt.ShowDialog() == DialogResult.OK
+                    ? txt.Text
+                    : null;
+            }
+        }
+
+        // EDGE EKLEME
+        private int? _selectedEdgeNodeId = null; // Seçili node'yi tutar
+        private void HandleAddEdgeClick(int nodeId)
+        {
+            // İlk düğüm seçimi
+            if (_selectedEdgeNodeId == null)
+            {
+                _selectedEdgeNodeId = nodeId;
+                txtTerminal.AppendText($"1. düğüm seçildi: {nodeId}\r\n");
+                return;
+            }
+
+            // Aynı düğümse iptal
+            if (_selectedEdgeNodeId == nodeId)
+            {
+                txtTerminal.AppendText("Aynı düğüm seçilemez.\r\n");
+                return;
+            }
+
+            int fromId = _selectedEdgeNodeId.Value;
+            int toId = nodeId;
+
+            // Edge zaten varsa
+            if (_graph.HasEdge(fromId, toId))
+            {
+                txtTerminal.AppendText($"{fromId} ↔ {toId} bağlantısı zaten var.\r\n");
+                _selectedEdgeNodeId = null;
+                return;
+            }
+
+            _graph.AddEdge(fromId, toId); // Edge ekle
+            UpdateTopNodesTable(); // top5 tablosunu güncelle
+            pbCanvas.Invalidate(); // canvası güncelle
+            txtTerminal.AppendText($"{fromId} ↔ {toId} bağlantısı eklendi.\r\n");
+            _selectedEdgeNodeId = null; // seçimi sıfırla
+        }
+
+        // EDGE SİLME
+        private const float EDGE_CLICK_TOLERANCE = 6f;
+        private (int fromId, int toId)? GetEdgeAtPoint(Point p)
+        {
+            foreach (var from in _nodePositions)
+            {
+                int fromId = from.Key;
+                PointF p1 = from.Value;
+
+                foreach (int toId in _graph.GetNeighbors(fromId))
+                {
+                    // Aynı edge iki kere gelmesin
+                    if (fromId >= toId) continue;
+
+                    if (!_nodePositions.ContainsKey(toId)) continue;
+
+                    PointF p2 = _nodePositions[toId];
+
+                    if (DistancePointToLine(p, p1, p2) <= EDGE_CLICK_TOLERANCE)
+                        return (fromId, toId);
+                }
+            }
+            return null;
+        }
+        private float DistancePointToLine(Point p, PointF a, PointF b) // Nokta-Çizgi mesafesi
+        {
+            float A = p.X - a.X;
+            float B = p.Y - a.Y;
+            float C = b.X - a.X;
+            float D = b.Y - a.Y;
+
+            float dot = A * C + B * D;
+            float lenSq = C * C + D * D;
+            float param = (lenSq != 0) ? dot / lenSq : -1;
+
+            float xx, yy;
+
+            if (param < 0)
+            {
+                xx = a.X;
+                yy = a.Y;
+            }
+            else if (param > 1)
+            {
+                xx = b.X;
+                yy = b.Y;
+            }
+            else
+            {
+                xx = a.X + param * C;
+                yy = a.Y + param * D;
+            }
+
+            float dx = p.X - xx;
+            float dy = p.Y - yy;
+
+            return (float)Math.Sqrt(dx * dx + dy * dy);
+        }
+        private void DeleteEdge(int fromId, int toId)
+        {
+            _graph.RemoveEdge(fromId, toId);
+
+            UpdateTopNodesTable();
+            pbCanvas.Invalidate();
+
+            txtTerminal.AppendText($"{fromId} ↔ {toId} bağlantısı silindi.\r\n");
+        }
+
+
+
+
 
         // Küçük graf butonu
         private void btnLoadSmall_Click(object sender, EventArgs e)
@@ -187,6 +519,8 @@ namespace GraffProjesi
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+            _nodeCounter = _people.Max(p => p.Id) + 1;
+
         }
 
         // ListBox'ı doldur
@@ -202,7 +536,7 @@ namespace GraffProjesi
 
             foreach (var p in _people)
             {
-                lstPeople.Items.Add($"{p.Id} - {p.AdSoyad}");
+                lstPeople.Items.Add($"{p.Id} - {p.Name}");
             }
         }
 
@@ -225,11 +559,72 @@ namespace GraffProjesi
                 return;
 
             MessageBox.Show(
-                $"Id: {person.Id}\nAd Soyad: {person.AdSoyad}",
+                $"Id: {person.Id}\nAd Soyad: {person.Name}",
                 "Kişi Bilgisi",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
+
+        private const float NODE_RADIUS = 15f; //düğüm yarıçapı
+        private int? GetNodeAtPoint(Point p) //düğümün neresine basarsan bas, siler
+        {
+            foreach (var kvp in _nodePositions)
+            {
+                float dx = p.X - kvp.Value.X;
+                float dy = p.Y - kvp.Value.Y;
+
+                if (dx * dx + dy * dy <= NODE_RADIUS * NODE_RADIUS)
+                    return kvp.Key;
+            }
+
+            return null;
+        }
+
+        private void SetEditMode(EditMode mode) // Edit modu ayarları:
+        {
+            _currentMode = mode;
+
+            // Renkleri sıfırla
+            btnAddNode.BackColor = SystemColors.Control;
+            button2.BackColor = SystemColors.Control;  //düğüm sil butonu
+            btnAddEdge.BackColor = SystemColors.Control;
+            btnDeleteEdge.BackColor = SystemColors.Control;
+            
+            // Terminal temizle
+            // txtTerminal.Clear();
+
+            switch (mode)
+            {
+                case EditMode.AddNode:
+                    btnAddNode.BackColor = Color.LightGreen;
+                    txtTerminal.AppendText("Düğüm ekleme modu aktif.\r\n");
+                    break;
+
+                case EditMode.DeleteNode:
+                    button2.BackColor = Color.IndianRed;
+                    txtTerminal.AppendText("Düğüm silme modu aktif.\r\n");
+                    break;
+
+                case EditMode.AddEdge:
+                    btnAddEdge.BackColor = Color.LightBlue;
+                    txtTerminal.AppendText("Kenar ekleme modu aktif.\r\n");
+                    break;
+
+                case EditMode.DeleteEdge:
+                    btnDeleteEdge.BackColor = Color.OrangeRed;
+                    txtTerminal.AppendText("Kenar silme modu aktif.\r\n");
+                    break;
+
+                case EditMode.None:
+                default:
+                    txtTerminal.AppendText("Düzenleme modu kapalı.\r\n");
+                    break;
+            }
+        }
+
+
+
+        // ------- Butonlar: --------
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -278,6 +673,8 @@ namespace GraffProjesi
             _draggedNodeId = -1;
         }
 
+        // Clickler:
+
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             // Burası boş
@@ -293,5 +690,177 @@ namespace GraffProjesi
 
         }
 
+        private void groupBox1_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            // Modu ve seçimleri sıfırla
+            SetEditMode(EditMode.None);
+            _draggedNodeId = -1;
+            _isDragging = false;
+            _selectedEdgeNodeId = null;
+
+            // Bellekteki verileri temizle
+            if (_graph != null) _graph.Clear();
+            if (_people != null) _people.Clear();
+            _nodePositions.Clear(); // Ekrandaki düğüm konumlarını siler
+
+            // Arayüz bileşenlerini temizle
+            lstPeople.Items.Clear();
+            dgvTopNodes.Rows.Clear();
+            txtTerminal.Clear();
+            txtTerminal.AppendText("Sistem tamamen sıfırlandı. Yeni graf yükleyebilir veya düğüm ekleyebilirsiniz.\r\n");
+
+            // Canvas'ı yeniden çizdir (boş)
+            pbCanvas.Invalidate();
+
+            MessageBox.Show("Tüm veriler ve çizim alanı temizlendi.", "Sıfırla", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+
+        private void btnDijkstra_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnAStar_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnDFS_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnConnectedComponents_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cmbStartNode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cmbEndNode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click_1(object sender, EventArgs e) //Düğüm ekle butonu
+        {
+            if (_currentMode == EditMode.AddNode)
+                SetEditMode(EditMode.None);
+            else
+                SetEditMode(EditMode.AddNode);
+        }
+
+        private void pbCanvas_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (_currentMode == EditMode.AddNode) // Ekleme modundaysa ekle
+            {
+                AddNodeAt(e.Location);
+            }
+            else if (_currentMode == EditMode.DeleteNode) // Silme modundaysa sil
+            {
+                int? nodeId = GetNodeAtPoint(e.Location);
+
+                if (nodeId.HasValue) //Tıklanan yerde düğüm varsa
+                {
+                    DeleteNode(nodeId.Value);
+                }
+                else
+                {
+                    txtTerminal.AppendText("Tıklanan yerde düğüm yok.\r\n");
+                }
+            }
+            else if (_currentMode == EditMode.UpdateNode)
+            {
+                int? nodeId = GetNodeAtPoint(e.Location);
+                if (nodeId.HasValue)
+                    UpdateNode(nodeId.Value);
+                else
+                    txtTerminal.AppendText("Tıklanan yerde düğüm yok.\r\n");
+            }
+            else if (_currentMode == EditMode.AddEdge)
+            {
+                int? nodeId = GetNodeAtPoint(e.Location);
+
+                if (!nodeId.HasValue)
+                {
+                    txtTerminal.AppendText("Bir düğüme tıklayın.\r\n");
+                    return;
+                }
+                HandleAddEdgeClick(nodeId.Value);
+            }
+            else if (_currentMode == EditMode.DeleteEdge)
+            {   // düğüme mi tıklandı?
+                int? nodeId = GetNodeAtPoint(e.Location);
+                if (nodeId.HasValue)
+                {
+                    txtTerminal.AppendText("Kenar silmek için çizgiye tıklayın.\r\n");
+                    return;
+                }
+                // edge kontrolü
+                var edge = GetEdgeAtPoint(e.Location);
+                if (edge.HasValue)
+                {
+                    DeleteEdge(edge.Value.fromId, edge.Value.toId);
+                }
+                else
+                {
+                    txtTerminal.AppendText("Tıklanan yerde kenar yok.\r\n");
+                }
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e) //Düğüm sil
+        {
+            if (_currentMode == EditMode.DeleteNode)
+                SetEditMode(EditMode.None);
+            else
+                SetEditMode(EditMode.DeleteNode);
+        }
+
+        private void btnUpdateNode_Click(object sender, EventArgs e)
+        {
+            if (_currentMode == EditMode.UpdateNode)
+                SetEditMode(EditMode.None);
+            else
+                SetEditMode(EditMode.UpdateNode);
+        }
+
+        private void btnAddEdge_Click(object sender, EventArgs e)
+        {
+            if (_currentMode == EditMode.AddEdge)
+                SetEditMode(EditMode.None);
+            else
+                SetEditMode(EditMode.AddEdge);
+
+            _selectedEdgeNodeId = null;
+        }
+
+        private void btnDeleteEdge_Click(object sender, EventArgs e)
+        {
+            if (_currentMode == EditMode.DeleteEdge)
+                SetEditMode(EditMode.None);
+            else
+                SetEditMode(EditMode.DeleteEdge);
+        }
+
+        private void btnResetTerminal_Click(object sender, EventArgs e)
+        {
+            btnAddNode.BackColor = SystemColors.Control;
+            button2.BackColor = SystemColors.Control;  //düğüm sil butonu
+            btnUpdateNode.BackColor = SystemColors.Control;
+            btnAddEdge.BackColor = SystemColors.Control;
+            btnDeleteEdge.BackColor = SystemColors.Control;
+            btnReset.BackColor = SystemColors.Control;
+            txtTerminal.Clear();
+        }
     } // class kapanışı
 } // namespace kapanışı

@@ -8,7 +8,7 @@ namespace GraffProjesi
     public static class CsvPeopleLoader
     {
         // Beklenen format:
-        // Id;AdSoyad
+        // Id;Name
         // 1;Ayşe Yılmaz
         // 2;Mehmet Demir
         public static List<Person> Load(string fileName)
@@ -32,7 +32,7 @@ namespace GraffProjesi
                 if (line.StartsWith("#"))
                     continue;
 
-                // İlk satır başlık: "Id;AdSoyad"
+                // İlk satır başlık: "Id;Name"
                 if (firstLine)
                 {
                     firstLine = false;
@@ -48,12 +48,12 @@ namespace GraffProjesi
                 if (!int.TryParse(parts[0].Trim(), out int id))
                     continue;
 
-                string adSoyad = parts[1].Trim();
+                string name = parts[1].Trim();
 
                 people.Add(new Person
                 {
                     Id = id,
-                    AdSoyad = adSoyad
+                    Name = name
                 });
             }
 

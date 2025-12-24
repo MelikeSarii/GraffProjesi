@@ -64,19 +64,51 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
             return _nodes.Values;
         }
 
+        public void RemoveNode(int id)
+        {
+            if (!_nodes.ContainsKey(id)) return;
+
+            Node node = _nodes[id];
+
+            // Tüm komşuların adjacency listesinden çıkar
+            foreach (var neighbors in _adjacency.Values)
+                neighbors.Remove(node);
+
+            _adjacency.Remove(node);
+            _nodes.Remove(id);
+        }
+
         // -------- Edge işlemleri --------
 
         public void AddEdge(int fromId, int toId)
         {
-            Node from = AddNode(fromId);
-            Node to = AddNode(toId);
+            Node from = _nodes[fromId];
+            Node to = _nodes[toId];
 
-            // Yönsüz graf
             if (!_adjacency[from].Contains(to))
+            {
                 _adjacency[from].Add(to);
-
-            if (!_adjacency[to].Contains(from))
                 _adjacency[to].Add(from);
+
+                // kenar eklenince bağlantı sayısı ve etkileşimler artsın
+                from.BaglantiSayisi++;
+                to.BaglantiSayisi++;
+
+                from.Etkilesim++;
+                to.Etkilesim++;
+            }
+        }
+
+
+        public bool HasEdge(int fromId, int toId)
+        {
+            if (!_nodes.ContainsKey(fromId) || !_nodes.ContainsKey(toId))
+                return false;
+
+            Node from = _nodes[fromId];
+            Node to = _nodes[toId];
+
+            return _adjacency[from].Contains(to);
         }
 
         public List<Node> GetNeighbors(Node node)
@@ -102,6 +134,29 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
             return new List<int>();
         }
 
+        public void RemoveEdge(int fromId, int toId) // Edge silme
+        {
+            if (!_nodes.ContainsKey(fromId) || !_nodes.ContainsKey(toId))
+                return;
+
+            Node from = _nodes[fromId];
+            Node to = _nodes[toId];
+
+            if (_adjacency[from].Remove(to))
+            {
+                _adjacency[to].Remove(from);
+
+                // kenar silinince bağlantı ve etkileşim düşer
+                from.BaglantiSayisi--;
+                to.BaglantiSayisi--;
+
+                from.Etkilesim = Math.Max(0, from.Etkilesim - 1);
+                to.Etkilesim = Math.Max(0, to.Etkilesim - 1);
+            }
+        }
+
+
+
         // -------- Degree --------
 
         public int GetDegree(Node node)
@@ -122,14 +177,15 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
 
         // -------- Dosyadan graf yükleme --------
         // Her satır: from to
-        // # ile başlayan satırlar yorum satırıdır
+        // # ile başlayan satırlar yorum satırı
 
         public void LoadFromFile(string path)
         {
-            // Grafı sıfırla (Clear metodu yoksa direkt _adjacency.Clear() kullan)
+            // Grafı sıfırla (Clear metodu yoksa direkt _adjacency.Clear() kullandık)
             _adjacency.Clear();
-            // Eğer ayrıca Clear() diye bir metod yazmak istersen:
+            // Eğer ayrıca Clear() diye bir metod yazmak istersek:
             // public void Clear() { _adjacency.Clear(); }
+            Random rnd = new Random();
 
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var fullPath = Path.Combine(baseDir, path);
@@ -153,6 +209,12 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
                 if (int.TryParse(parts[0], out int from) &&
                     int.TryParse(parts[1], out int to))   // <-- buradaki f gitti
                 {
+                    if (!_nodes.ContainsKey(from))
+                        AddNode(from, rnd.NextDouble(), 0, 0); // Aktiflik 0-1 random, etkileşim 0
+
+                    if (!_nodes.ContainsKey(to))
+                        AddNode(to, rnd.NextDouble(), 0, 0);
+
                     AddEdge(from, to);
                 }
             }

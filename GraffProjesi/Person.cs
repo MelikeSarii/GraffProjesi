@@ -2,10 +2,10 @@
 
 namespace GraffProjesi
 {
-    // Artık kişi = sadece Id + AdSoyad
+    // Artık kişi = sadece Id + Name
     public class Person
     {
         public int Id { get; set; }
-        public string AdSoyad { get; set; }
+        public string Name { get; set; }
     }
 }

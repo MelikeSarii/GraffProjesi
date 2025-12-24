@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,18 +12,20 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
     {
         public int Id { get; set; }
 
+        // UI için
+        public string Name { get; set; }
+        public Point Position { get; set; }
+
         // --- Dinamik ağırlık hesabında kullanılan özellikler ---
         public double Aktiflik { get; set; }
         public double Etkilesim { get; set; }
         public int BaglantiSayisi { get; set; }
 
-        // Boş kurucu
         public Node(int id)
         {
             Id = id;
         }
 
-        // Özelliklerle birlikte kurucu
         public Node(int id, double aktiflik, double etkilesim, int baglantiSayisi)
         {
             Id = id;
@@ -32,5 +35,4 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
         }
     }
 }
-
 
