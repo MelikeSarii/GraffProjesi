@@ -1,99 +1,107 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GraffProjesi
 {
     // A* En Kısa Yol Algoritması
     public class AStarAlgorithm : Algorithm
     {
-        public int TargetNodeId { get; set; }
+        public Dictionary<int, int?> Previous { get; private set; }
+        public Dictionary<int, double> GScore { get; private set; }
 
-        // Sonuç: en kısa mesafeler
-        public Dictionary<int, double> Distances { get; private set; }
+        public double TotalCost { get; private set; }
 
         public AStarAlgorithm(Graph graph) : base(graph)
         {
-            Distances = new Dictionary<int, double>();
+            Previous = new Dictionary<int, int?>();
+            GScore = new Dictionary<int, double>();
         }
 
-        // -------- A* --------
         public override void Execute(int startNodeId)
         {
-            Distances.Clear();
+            throw new NotImplementedException(
+                "A* algoritması için hedef düğüm gereklidir."
+            );
+        }
 
-            var openSet = new HashSet<Node>();
-            var closedSet = new HashSet<Node>();
-
-            var gScore = new Dictionary<Node, double>();
-            var fScore = new Dictionary<Node, double>();
+        //  A*
+        public void Execute(int startId, int endId)
+        {
+            Previous.Clear();
+            GScore.Clear();
+            TotalCost = double.PositiveInfinity;
 
             var nodes = Graph.GetAllNodes().ToList();
+            var openSet = new HashSet<Node>();
 
-            Node startNode = nodes.FirstOrDefault(n => n.Id == startNodeId);
-            Node targetNode = nodes.FirstOrDefault(n => n.Id == TargetNodeId);
+            Node start = nodes.FirstOrDefault(n => n.Id == startId);
+            Node goal = nodes.FirstOrDefault(n => n.Id == endId);
 
-            if (startNode == null || targetNode == null)
-                throw new Exception("Başlangıç veya hedef düğüm bulunamadı!");
+            if (start == null || goal == null)
+                throw new Exception("Başlangıç veya hedef düğüm bulunamadı.");
 
             foreach (var node in nodes)
             {
-                gScore[node] = double.PositiveInfinity;
-                fScore[node] = double.PositiveInfinity;
-                Distances[node.Id] = double.PositiveInfinity;
+                GScore[node.Id] = double.PositiveInfinity;
+                Previous[node.Id] = null;
             }
 
-            gScore[startNode] = 0;
-            fScore[startNode] = Heuristic(startNode, targetNode);
-
-            openSet.Add(startNode);
+            GScore[start.Id] = 0;
+            openSet.Add(start);
 
             while (openSet.Count > 0)
             {
-                // fScore'u en küçük olan düğümü seç
-                Node current = openSet.OrderBy(n => fScore[n]).First();
+                Node current = openSet
+                    .OrderBy(n => GScore[n.Id] + Heuristic(n, goal))
+                    .First();
 
-                if (current == targetNode)
+                if (current.Id == goal.Id)
                 {
-                    // Hedefe ulaşıldı
-                    break;
+                    TotalCost = GScore[goal.Id];
+                    return;
                 }
 
                 openSet.Remove(current);
-                closedSet.Add(current);
 
                 foreach (var neighbor in Graph.GetNeighbors(current))
                 {
-                    if (closedSet.Contains(neighbor))
-                        continue;
+                    double tentativeG =
+                        GScore[current.Id] + CalculateWeight(current, neighbor);
 
-                    double tentativeG = gScore[current] + CalculateWeight(current, neighbor);
-
-                    if (!openSet.Contains(neighbor))
+                    if (tentativeG < GScore[neighbor.Id])
+                    {
+                        GScore[neighbor.Id] = tentativeG;
+                        Previous[neighbor.Id] = current.Id;
                         openSet.Add(neighbor);
-                    else if (tentativeG >= gScore[neighbor])
-                        continue;
-
-                    gScore[neighbor] = tentativeG;
-                    fScore[neighbor] = tentativeG + Heuristic(neighbor, targetNode);
-                    Distances[neighbor.Id] = gScore[neighbor];
+                    }
                 }
-            }
-
-            // Son durumda gScore'u Distances'a aktar
-            foreach (var pair in gScore)
-            {
-                Distances[pair.Key.Id] = pair.Value;
             }
         }
 
-        // -------- Heuristic fonksiyonu --------
-        private double Heuristic(Node current, Node target)
+        // Heuristic fonksiyon
+        private double Heuristic(Node a, Node b)
         {
-            // Node özelliklerine dayalı tahmini maliyet
-            return CalculateWeight(current, target);
+            double da = a.Aktiflik - b.Aktiflik;
+            double de = a.Etkilesim - b.Etkilesim;
+            double db = a.BaglantiSayisi - b.BaglantiSayisi;
+
+            return Math.Sqrt(da * da + de * de + db * db);
+        }
+
+        // Yol çıkarma
+        public List<int> GetPath(int endId)
+        {
+            var path = new List<int>();
+            int? current = endId;
+
+            while (current != null)
+            {
+                path.Insert(0, current.Value);
+                current = Previous[current.Value];
+            }
+
+            return path;
         }
     }
 }

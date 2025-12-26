@@ -22,6 +22,7 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
 
         // Komşuluk listesi: Node -> Komşu Node'lar
         private Dictionary<Node, List<Node>> _adjacency;
+        private readonly Random _rnd = new Random();
 
         public Graph() // kurucu metot
         {
@@ -33,30 +34,38 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
         }
 
         // -------- Node işlemleri --------
-
-        public Node AddNode(int id) // eklenecek olan düğümün id'si
+        public Node AddNode(int id)// eklenecek olan düğümün id'si
         {
-            if (!_nodes.ContainsKey(id)) // eğer bu id daha önce eklenmediyse
+            if (!_nodes.ContainsKey(id))// eğer bu id daha önce eklenmediyse
             {
                 Node node = new Node(id);
                 _nodes[id] = node;
+                _adjacency[node] = new List<Node>();//sözlüğe id numaralı düğüm için boş komşu listesi açılır
+            }
+            return _nodes[id];
+        }
+
+        public Node AddNode(int id, double aktiflik, double etkilesim, int baglantiSayisi) // Düğüme özelliklerini ekleme
+        {
+            if (!_nodes.ContainsKey(id))
+            {
+                Node node = new Node(
+                    id,
+                    aktiflik,       
+                    etkilesim,      
+                    baglantiSayisi
+                );
+
+                _nodes[id] = node;
                 _adjacency[node] = new List<Node>();
-                //sözlüğe id numaralı düğüm için boş komşu listesi açılır
             }
 
             return _nodes[id];
         }
 
-        public Node AddNode(int id, double aktiflik, double etkilesim, int baglantiSayisi) // düğüme özelliklerini ekleme
+        public Node GetNode(int id) //Hatalı veri engellenmesi için
         {
-            if (!_nodes.ContainsKey(id))
-            {
-                Node node = new Node(id, aktiflik, etkilesim, baglantiSayisi);
-                _nodes[id] = node;
-                _adjacency[node] = new List<Node>();
-            }
-
-            return _nodes[id];
+            return _nodes.ContainsKey(id) ? _nodes[id] : null;
         }
 
         public IEnumerable<Node> GetAllNodes()
@@ -90,15 +99,11 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
                 _adjacency[from].Add(to);
                 _adjacency[to].Add(from);
 
-                // kenar eklenince bağlantı sayısı ve etkileşimler artsın
+                // kenar eklenince bağlantı sayısı artsın
                 from.BaglantiSayisi++;
                 to.BaglantiSayisi++;
-
-                from.Etkilesim++;
-                to.Etkilesim++;
             }
         }
-
 
         public bool HasEdge(int fromId, int toId)
         {
@@ -155,10 +160,7 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
             }
         }
 
-
-
         // -------- Degree --------
-
         public int GetDegree(Node node)
         {
             if (_adjacency.ContainsKey(node))
@@ -168,7 +170,6 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
         }
 
         // -------- Grafı temizleme --------
-
         public void Clear()
         {
             _nodes.Clear();
@@ -180,12 +181,12 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
         // # ile başlayan satırlar yorum satırı
 
         public void LoadFromFile(string path)
-        {
-            // Grafı sıfırla (Clear metodu yoksa direkt _adjacency.Clear() kullandık)
-            _adjacency.Clear();
+        {   // Grafı sıfırla (Clear metodu yoksa direkt _adjacency.Clear() kullandık)
             // Eğer ayrıca Clear() diye bir metod yazmak istersek:
             // public void Clear() { _adjacency.Clear(); }
-            Random rnd = new Random();
+          
+            _nodes.Clear();  // 1️- Önce grafı tamamen temizle
+            _adjacency.Clear();
 
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var fullPath = Path.Combine(baseDir, path);
@@ -193,6 +194,7 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
             if (!File.Exists(fullPath))
                 throw new FileNotFoundException("Graf dosyası bulunamadı", fullPath);
 
+            // 2️- Dosyayı satır satır oku
             foreach (var rawLine in File.ReadAllLines(fullPath))
             {
                 var line = rawLine.Trim();
@@ -207,18 +209,35 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
                 if (parts.Length < 2) continue;
 
                 if (int.TryParse(parts[0], out int from) &&
-                    int.TryParse(parts[1], out int to))   // <-- buradaki f gitti
+                    int.TryParse(parts[1], out int to))
                 {
+                    // 3️- DÜĞÜM YOKSA RANDOM ÖZELLİKLERLE EKLE
                     if (!_nodes.ContainsKey(from))
-                        AddNode(from, rnd.NextDouble(), 0, 0); // Aktiflik 0-1 random, etkileşim 0
+                    {
+                        AddNode(
+                            from,
+                            Math.Round(_rnd.NextDouble(), 2), // Aktiflik: 0–1
+                            _rnd.Next(1, 11),                 // Etkileşim: 1–10
+                            0
+                        );
+                    }
 
                     if (!_nodes.ContainsKey(to))
-                        AddNode(to, rnd.NextDouble(), 0, 0);
+                    {
+                        AddNode(
+                            to,
+                            Math.Round(_rnd.NextDouble(), 2),
+                            _rnd.Next(0, 11),
+                            0
+                        );
+                    }
 
+                    // 4️- Kenar ekle (bağlantı ve etkileşim artışı burada olur)
                     AddEdge(from, to);
                 }
             }
         }
+
         public List<Node> GetTop5DegreeNodes()
         {
             if (_nodes == null || _nodes.Count == 0)

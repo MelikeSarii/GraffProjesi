@@ -61,10 +61,8 @@ namespace GraffProjesi
                         result[other.Id] = currentColor;
                     }
                 }
-
                 currentColor++;
             }
-
             return result;
         }
     }

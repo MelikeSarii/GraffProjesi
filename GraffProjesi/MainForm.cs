@@ -25,9 +25,14 @@ namespace GraffProjesi
         private Graph _graph;
         private List<Person> _people;
 
+        private Dictionary<int, int> _nodeColors; // Welsh–Powell renk sonucu: <NodeId, ColorIndex>
+        private bool _isColoringActive = false;
+
+
         public MainForm()
         {
             InitializeComponent();
+            SetupColoringGrid();
         }
 
         // Form açılır açılmaz KÜÇÜK grafı yükle
@@ -43,13 +48,22 @@ namespace GraffProjesi
             DeleteNode,
             UpdateNode,
             AddEdge,
-            DeleteEdge
+            DeleteEdge,
+            SelectStart,
+            SelectTarget
         }
 
         private EditMode _currentMode = EditMode.None;
 
         private void LoadData(string graphFile, string peopleFile, string description)
         {
+            _startNodeId = null;
+            _targetNodeId = null;
+
+            _nodeColors = null;
+            _isColoringActive = false;
+
+            dgvColoring.Rows.Clear();
             try
             {
                 _graph = new Graph();
@@ -102,46 +116,68 @@ namespace GraffProjesi
             pbCanvas.Invalidate();
         }
 
-        //düğüm çizimi
-        // Bu metot sadece pbCanvas için çizim yapar
+        // DÜĞÜM ÇİZİMİ: Bu metot sadece pbCanvas için çizim yapar
         private void pbCanvas_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-            if (_nodePositions == null || _nodePositions.Count == 0) return;
+            if (_nodePositions == null || _nodePositions.Count == 0)
+                return;
 
-            // 1. Önce Kenarları (Çizgileri) ve Ağırlıkları Çiz
+            // 1️ KENARLARI ÇİZ
             foreach (var nodePos in _nodePositions)
             {
                 int fromId = nodePos.Key;
-                // Graph.cs'ye yeni eklediğimiz GetNeighbors(int id) metodunu kullanıyoruz
                 var neighbors = _graph.GetNeighbors(fromId);
 
                 foreach (var toId in neighbors)
                 {
-                    // Eğer komşu düğümün de konumu biliniyorsa çizgi çek
                     if (_nodePositions.ContainsKey(toId))
                     {
-                        PointF p1 = nodePos.Value;
-                        PointF p2 = _nodePositions[toId];
-                        g.DrawLine(Pens.Gray, p1, p2); // Kenarı çiz
-
-                        // Dinamik ağırlığı hesapla ve çizginin ortasına yaz
-                        //double weight = _graph.CalculateWeight(fromId, toId);
-                        //g.DrawString(weight.ToString("F2"), this.Font, Brushes.Red, (p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2);
+                        g.DrawLine(
+                            Pens.Gray,
+                            _nodePositions[fromId],
+                            _nodePositions[toId]
+                        );
                     }
                 }
             }
-
-            // 2. Düğümleri (Kişileri) Çiz
+            // 2️ DÜĞÜMLERİ ÇİZ (RENKLİ)
             foreach (var node in _nodePositions)
-            {       // Mavi yuvarlaklar çiziyoruz
-                g.FillEllipse(Brushes.SkyBlue, node.Value.X - 15, node.Value.Y - 15, 30, 30);
-                g.DrawEllipse(Pens.Black, node.Value.X - 15, node.Value.Y - 15, 30, 30);
+            {
+                Color fillColor = Color.SkyBlue; // Varsayılan
 
-                // ID yazıyoruz
-                g.DrawString(
+                // Welsh–Powell renklendirme varsa uygula
+                if (_nodeColors != null && _nodeColors.ContainsKey(node.Key))
+                {
+                    fillColor = GetColorByIndex(_nodeColors[node.Key]);
+                }
+
+                // Başlangıç ve hedef her zaman baskın renkte
+                if (node.Key == _startNodeId)
+                    fillColor = Color.LightGreen;
+                else if (node.Key == _targetNodeId)
+                    fillColor = Color.Orange;
+
+                using (Brush brush = new SolidBrush(fillColor))
+                {
+                    g.FillEllipse(
+                        brush,
+                        node.Value.X - 15,
+                        node.Value.Y - 15,
+                        30,
+                        30
+                    );
+                }
+                g.DrawEllipse(
+                    Pens.Black,
+                    node.Value.X - 15,
+                    node.Value.Y - 15,
+                    30,
+                    30
+                );
+                g.DrawString(  // ID yaz
                     node.Key.ToString(),
                     this.Font,
                     Brushes.Black,
@@ -150,6 +186,7 @@ namespace GraffProjesi
                 );
             }
         }
+
         private void UpdateTopNodesTable()
             {
             if (_graph == null) return;// Eğer graf yüklenmemişse işlem yapma
@@ -164,6 +201,14 @@ namespace GraffProjesi
 
                 dgvTopNodes.Rows.Add(nodeId, degree); 
             }
+        }
+
+        private void WriteToTerminal(string text) // Terminali otomatik aşağıya çekmek için
+        {
+            if (string.IsNullOrWhiteSpace(text)) return;
+            txtTerminal.AppendText(text + Environment.NewLine);
+            txtTerminal.SelectionStart = txtTerminal.Text.Length;
+            txtTerminal.ScrollToCaret();
         }
 
         // DÜĞÜM EKLEME
@@ -183,6 +228,23 @@ namespace GraffProjesi
             // ID'yi belirle: Eğer liste boşsa 1, değilse son kişiden devam ettir
             int id = (_people != null && _people.Any()) ? _people.Max(p => p.Id) + 1 : 1;
 
+            // Aynı isim + aktiflik kontrolü
+            bool exists = _people.Any(p =>
+                p.Name.Equals(name, StringComparison.OrdinalIgnoreCase) &&
+                _graph.GetNode(p.Id)?.Aktiflik == aktiflik
+            );
+
+            if (exists)
+            {
+                MessageBox.Show(
+                    "Aynı isim ve aktifliğe sahip bir düğüm zaten mevcut.",
+                    "Ekleme Engellendi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+
             _graph.AddNode(id, aktiflik, 0, 0);  // Graph'a ekle
             
             _nodePositions[id] = location; // Çiz
@@ -195,16 +257,15 @@ namespace GraffProjesi
 
             FillPeopleList();
             pbCanvas.Invalidate();
-
-            txtTerminal.AppendText($"Düğüm {id} - {name} eklendi.\r\n");
+            UpdateNodeCombos();
+            WriteToTerminal($"Düğüm {id} - {name} eklendi.\r\n");
         }
-
-        private (string name, double aktiflik)? AskNodeInfo() // Yeni düğüme bilgi girme
+        private (string name, double aktiflik, int etkilesim)? AskNodeInfo() // Yeni düğüme bilgi
         {
             using (Form prompt = new Form())
             {
                 prompt.Width = 300;
-                prompt.Height = 220;
+                prompt.Height = 270;
                 prompt.Text = "Yeni Düğüm";
 
                 Label lblName = new Label()
@@ -236,12 +297,27 @@ namespace GraffProjesi
                     Text = "0.5"
                 };
 
+                Label lblEtkilesim = new Label()
+                {
+                    Left = 10,
+                    Top = 130,
+                    Text = "Etkileşim (1–10):"
+                };
+
+                TextBox txtEtkilesim = new TextBox()
+                {
+                    Left = 10,
+                    Top = 155,
+                    Width = 260,
+                    Text = "5"
+                };
+
                 Button btnOk = new Button()
                 {
                     Text = "Tamam",
                     Left = 200,
                     Width = 70,
-                    Top = 140,
+                    Top = 190,
                     DialogResult = DialogResult.OK
                 };
 
@@ -249,6 +325,8 @@ namespace GraffProjesi
                 prompt.Controls.Add(txtName);
                 prompt.Controls.Add(lblAktiflik);
                 prompt.Controls.Add(txtAktiflik);
+                prompt.Controls.Add(lblEtkilesim);
+                prompt.Controls.Add(txtEtkilesim);
                 prompt.Controls.Add(btnOk);
 
                 prompt.AcceptButton = btnOk;
@@ -257,7 +335,8 @@ namespace GraffProjesi
                 if (prompt.ShowDialog() != DialogResult.OK)
                     return null;
 
-                if (string.IsNullOrWhiteSpace(txtName.Text)) // İsim boş olduğunda
+                // 🔍 Validasyonlar
+                if (string.IsNullOrWhiteSpace(txtName.Text))
                 {
                     MessageBox.Show("İsim boş olamaz.");
                     return null;
@@ -274,9 +353,21 @@ namespace GraffProjesi
                     return null;
                 }
 
-                return (txtName.Text.Trim(), aktiflik);
+                if (!int.TryParse(txtEtkilesim.Text, out int etkilesim)
+                    || etkilesim < 1 || etkilesim > 10)
+                {
+                    MessageBox.Show("Etkileşim 1 ile 10 arasında tam sayı olmalıdır.");
+                    return null;
+                }
+
+                return (
+                    txtName.Text.Trim(),
+                    aktiflik,
+                    etkilesim
+                );
             }
         }
+
 
 
         // DÜĞÜM SİLME
@@ -308,8 +399,8 @@ namespace GraffProjesi
             FillPeopleList();
             UpdateTopNodesTable();
             pbCanvas.Invalidate();
-
-            txtTerminal.AppendText($"Düğüm {nodeId} - {name} silindi.\r\n");
+            UpdateNodeCombos(); //Hedef düğüm seçimi listelerini günceller
+            WriteToTerminal($"Düğüm {nodeId} - {name} silindi.\r\n");
         }
 
         // DÜĞÜM GÜNCELLEME
@@ -318,56 +409,118 @@ namespace GraffProjesi
             var person = _people.FirstOrDefault(p => p.Id == nodeId);
             if (person == null) return;
 
-            string oldName = person.Name;
+            Node node = _graph.GetNode(nodeId);
+            if (node == null) return;
 
-            string newName = AskNodeNameWithDefault(oldName);
-            if (string.IsNullOrWhiteSpace(newName) || newName == oldName)
+            var result = AskNodeInfoForUpdate(
+                person.Name,
+                node.Aktiflik,
+                node.Etkilesim
+            );
+            if (result == null)
                 return;
 
-            person.Name = newName;
+            string oldName = person.Name;
+            person.Name = result.Value.name;
+            node.Aktiflik = result.Value.aktiflik;
+            node.Etkilesim = result.Value.etkilesim;
 
             FillPeopleList();
+            UpdateNodeCombos();
             pbCanvas.Invalidate();
-
-            txtTerminal.AppendText($"{nodeId} - {oldName} → {newName} güncellendi.\r\n");
+            WriteToTerminal(
+                $"{nodeId} güncellendi → " +
+                $"İsim: {oldName} → {person.Name}, " +
+                $"Aktiflik: {node.Aktiflik:0.##}, " +
+                $"Etkileşim: {node.Etkilesim:0}"
+            );
         }
-        private string AskNodeNameWithDefault(string defaultName) //mecvut ismi görerek düzenleme
+            // İsim, aktiflik ve etkileşim düzenleme
+        private (string name, double aktiflik, double etkilesim)? AskNodeInfoForUpdate(
+        string defaultName,
+        double defaultAktiflik,
+        double defaultEtkilesim)
         {
             using (Form prompt = new Form())
             {
-                prompt.Width = 300;
-                prompt.Height = 150;
+                prompt.Width = 320;
+                prompt.Height = 260;
                 prompt.Text = "Düğüm Güncelle";
 
-                Label lbl = new Label() { Left = 10, Top = 10, Text = "Yeni isim:" };
-                TextBox txt = new TextBox()
+                Label lblName = new Label() { Left = 10, Top = 10, Text = "İsim:" };
+                TextBox txtName = new TextBox()
                 {
                     Left = 10,
-                    Top = 35,
-                    Width = 260,
+                    Top = 30,
+                    Width = 280,
                     Text = defaultName
+                };
+
+                Label lblAktiflik = new Label() { Left = 10, Top = 65, Text = "Aktiflik (0–1):" };
+                TextBox txtAktiflik = new TextBox()
+                {
+                    Left = 10,
+                    Top = 85,
+                    Width = 280,
+                    Text = defaultAktiflik.ToString("0.##")
+                };
+
+                Label lblEtkilesim = new Label() { Left = 10, Top = 120, Text = "Etkileşim (1–10):" };
+                TextBox txtEtkilesim = new TextBox()
+                {
+                    Left = 10,
+                    Top = 140,
+                    Width = 280,
+                    Text = defaultEtkilesim.ToString("0")
                 };
 
                 Button btnOk = new Button()
                 {
                     Text = "Güncelle",
-                    Left = 200,
-                    Width = 70,
-                    Top = 70,
+                    Left = 210,
+                    Width = 80,
+                    Top = 180,
                     DialogResult = DialogResult.OK
                 };
 
-                prompt.Controls.Add(lbl);
-                prompt.Controls.Add(txt);
-                prompt.Controls.Add(btnOk);
+                prompt.Controls.AddRange(new Control[]
+                {
+            lblName, txtName,
+            lblAktiflik, txtAktiflik,
+            lblEtkilesim, txtEtkilesim,
+            btnOk
+                });
+
                 prompt.AcceptButton = btnOk;
                 prompt.StartPosition = FormStartPosition.CenterParent;
 
-                return prompt.ShowDialog() == DialogResult.OK
-                    ? txt.Text
-                    : null;
+                if (prompt.ShowDialog() != DialogResult.OK)
+                    return null;
+
+                if (string.IsNullOrWhiteSpace(txtName.Text))
+                {
+                    MessageBox.Show("İsim boş olamaz.");
+                    return null;
+                }
+
+                if (!double.TryParse(txtAktiflik.Text, out double aktiflik) ||
+                    aktiflik < 0 || aktiflik > 1)
+                {
+                    MessageBox.Show("Aktiflik 0 ile 1 arasında olmalıdır.");
+                    return null;
+                }
+
+                if (!double.TryParse(txtEtkilesim.Text, out double etkilesim) ||
+                    etkilesim < 0 || etkilesim > 10)
+                {
+                    MessageBox.Show("Etkileşim 0 ile 10 arasında olmalıdır.");
+                    return null;
+                }
+
+                return (txtName.Text.Trim(), aktiflik, etkilesim);
             }
         }
+
 
         // EDGE EKLEME
         private int? _selectedEdgeNodeId = null; // Seçili node'yi tutar
@@ -377,14 +530,14 @@ namespace GraffProjesi
             if (_selectedEdgeNodeId == null)
             {
                 _selectedEdgeNodeId = nodeId;
-                txtTerminal.AppendText($"1. düğüm seçildi: {nodeId}\r\n");
+                WriteToTerminal($"1. düğüm seçildi: {nodeId}\r\n");
                 return;
             }
 
             // Aynı düğümse iptal
             if (_selectedEdgeNodeId == nodeId)
             {
-                txtTerminal.AppendText("Aynı düğüm seçilemez.\r\n");
+                WriteToTerminal("Aynı düğüm seçilemez.\r\n");
                 return;
             }
 
@@ -394,7 +547,7 @@ namespace GraffProjesi
             // Edge zaten varsa
             if (_graph.HasEdge(fromId, toId))
             {
-                txtTerminal.AppendText($"{fromId} ↔ {toId} bağlantısı zaten var.\r\n");
+                WriteToTerminal($"{fromId} ↔ {toId} bağlantısı zaten var.\r\n");
                 _selectedEdgeNodeId = null;
                 return;
             }
@@ -402,7 +555,7 @@ namespace GraffProjesi
             _graph.AddEdge(fromId, toId); // Edge ekle
             UpdateTopNodesTable(); // top5 tablosunu güncelle
             pbCanvas.Invalidate(); // canvası güncelle
-            txtTerminal.AppendText($"{fromId} ↔ {toId} bağlantısı eklendi.\r\n");
+            WriteToTerminal($"{fromId} ↔ {toId} bağlantısı eklendi.\r\n");
             _selectedEdgeNodeId = null; // seçimi sıfırla
         }
 
@@ -458,10 +611,8 @@ namespace GraffProjesi
                 xx = a.X + param * C;
                 yy = a.Y + param * D;
             }
-
             float dx = p.X - xx;
             float dy = p.Y - yy;
-
             return (float)Math.Sqrt(dx * dx + dy * dy);
         }
         private void DeleteEdge(int fromId, int toId)
@@ -471,12 +622,31 @@ namespace GraffProjesi
             UpdateTopNodesTable();
             pbCanvas.Invalidate();
 
-            txtTerminal.AppendText($"{fromId} ↔ {toId} bağlantısı silindi.\r\n");
+            WriteToTerminal($"{fromId} ↔ {toId} bağlantısı silindi.\r\n");
         }
 
+        // Başlangıç - Hedef düğümü seçimi
+        private int? _startNodeId = null;
+        private int? _targetNodeId = null;
+        private void UpdateNodeCombos()
+        {
+            cmbStartNode.Items.Clear();
+            cmbEndNode.Items.Clear();
 
+            if (_people == null) return;
 
+            foreach (var p in _people)
+            {
+                var item = new ComboNodeItem
+                {
+                    Id = p.Id,
+                    Text = $"{p.Id} - {p.Name}"
+                };
 
+                cmbStartNode.Items.Add(item);
+                cmbEndNode.Items.Add(item);
+            }
+        }
 
         // Küçük graf butonu
         private void btnLoadSmall_Click(object sender, EventArgs e)
@@ -493,6 +663,14 @@ namespace GraffProjesi
         // Ortak yükleme metodu
         private void LoadData(string graphFile, string peopleFile)
         {
+            _startNodeId = null;
+            _targetNodeId = null;
+
+            _nodeColors = null;
+            _isColoringActive = false;
+
+            dgvColoring.Rows.Clear();
+
             try
             {
                 _graph = new Graph();
@@ -520,10 +698,10 @@ namespace GraffProjesi
                     MessageBoxIcon.Error);
             }
             _nodeCounter = _people.Max(p => p.Id) + 1;
-
+            UpdateNodeCombos();
         }
 
-        // ListBox'ı doldur
+        // ListBox ve ComboBox'ları doldur
         private void FillPeopleList()
         {
             lstPeople.Items.Clear();
@@ -537,6 +715,25 @@ namespace GraffProjesi
             foreach (var p in _people)
             {
                 lstPeople.Items.Add($"{p.Id} - {p.Name}");
+            }
+
+            cmbStartNode.Items.Clear();
+            cmbEndNode.Items.Clear();
+
+            // Boş seçimler
+            cmbStartNode.Items.Add(new ComboNodeItem { Id = -1, Text = "-- Seçiniz --" });
+            cmbEndNode.Items.Add(new ComboNodeItem { Id = -1, Text = "-- Seçiniz --" });
+
+            foreach (var p in _people)
+            {
+                var item = new ComboNodeItem
+                {
+                    Id = p.Id,
+                    Text = $"{p.Id} - {p.Name}"
+                };
+
+                cmbStartNode.Items.Add(item);
+                cmbEndNode.Items.Add(item);
             }
         }
 
@@ -565,8 +762,26 @@ namespace GraffProjesi
                 MessageBoxIcon.Information);
         }
 
+        private void FillColoringTable() // Düğüm boyama
+        {
+            dgvColoring.Rows.Clear();
+
+            if (_nodeColors == null)
+                return;
+
+            foreach (var pair in _nodeColors)
+            {
+                dgvColoring.Rows.Add(
+                    pair.Key,
+                    pair.Value
+                );
+            }
+        }
+
+
+        // Düğüme basınca bilgi gösterme
         private const float NODE_RADIUS = 15f; //düğüm yarıçapı
-        private int? GetNodeAtPoint(Point p) //düğümün neresine basarsan bas, siler
+        private int? GetNodeAtPoint(Point p) //düğümün neresine basarsan bas
         {
             foreach (var kvp in _nodePositions)
             {
@@ -597,29 +812,44 @@ namespace GraffProjesi
             {
                 case EditMode.AddNode:
                     btnAddNode.BackColor = Color.LightGreen;
-                    txtTerminal.AppendText("Düğüm ekleme modu aktif.\r\n");
+                    WriteToTerminal("Düğüm ekleme modu aktif.\r\n");
                     break;
 
                 case EditMode.DeleteNode:
                     button2.BackColor = Color.IndianRed;
-                    txtTerminal.AppendText("Düğüm silme modu aktif.\r\n");
+                    WriteToTerminal("Düğüm silme modu aktif.\r\n");
                     break;
 
                 case EditMode.AddEdge:
                     btnAddEdge.BackColor = Color.LightBlue;
-                    txtTerminal.AppendText("Kenar ekleme modu aktif.\r\n");
+                    WriteToTerminal("Kenar ekleme modu aktif.\r\n");
                     break;
 
                 case EditMode.DeleteEdge:
                     btnDeleteEdge.BackColor = Color.OrangeRed;
-                    txtTerminal.AppendText("Kenar silme modu aktif.\r\n");
+                    WriteToTerminal("Kenar silme modu aktif.\r\n");
                     break;
 
                 case EditMode.None:
                 default:
-                    txtTerminal.AppendText("Düzenleme modu kapalı.\r\n");
+                    WriteToTerminal("Düzenleme modu kapalı.\r\n");
                     break;
             }
+        }
+        private void SetupColoringGrid()
+        {
+            dgvColoring.Columns.Clear();
+            dgvColoring.Rows.Clear();
+
+            dgvColoring.AutoGenerateColumns = false;
+            dgvColoring.AllowUserToAddRows = false;
+            dgvColoring.ReadOnly = true;
+
+            // Node ID sütunu
+            dgvColoring.Columns.Add("NodeId", "Düğüm ID");
+
+            // Renk Numarası sütunu
+            dgvColoring.Columns.Add("ColorNo", "Renk Kodu");
         }
 
 
@@ -675,11 +905,6 @@ namespace GraffProjesi
 
         // Clickler:
 
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            // Burası boş
-        }
-
         private void pbCanvas_Click(object sender, EventArgs e)
         {
 
@@ -708,47 +933,50 @@ namespace GraffProjesi
             if (_people != null) _people.Clear();
             _nodePositions.Clear(); // Ekrandaki düğüm konumlarını siler
 
+            _startNodeId = null; // Seçimleri sıfırlar
+            _targetNodeId = null;
+            cmbStartNode.SelectedIndex = 0;
+            cmbEndNode.SelectedIndex = 0;
+            dgvColoring.Rows.Clear();
+
+
             // Arayüz bileşenlerini temizle
             lstPeople.Items.Clear();
             dgvTopNodes.Rows.Clear();
             txtTerminal.Clear();
-            txtTerminal.AppendText("Sistem tamamen sıfırlandı. Yeni graf yükleyebilir veya düğüm ekleyebilirsiniz.\r\n");
+            WriteToTerminal("Sistem tamamen sıfırlandı. Yeni graf yükleyebilir veya düğüm ekleyebilirsiniz.\r\n");
 
             // Canvas'ı yeniden çizdir (boş)
             pbCanvas.Invalidate();
-
+            UpdateNodeCombos(); // Listeleri sıfırlar
+            _startNodeId = null;
+            _targetNodeId = null; // Seçimleri sıfırlar
+            _nodeColors = null; // Rekleri sıfırlar
+            _isColoringActive = false;
             MessageBox.Show("Tüm veriler ve çizim alanı temizlendi.", "Sıfırla", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
 
-        private void btnDijkstra_Click(object sender, EventArgs e)
+        private void cmbStartNode_SelectedIndexChanged(object sender, EventArgs e) // Start düğümü seçilsin
         {
+            if (cmbStartNode.SelectedItem == null)
+                return;
 
+            ComboNodeItem selected = (ComboNodeItem)cmbStartNode.SelectedItem;
+            _startNodeId = selected.Id;
+
+            pbCanvas.Invalidate();
         }
 
-        private void btnAStar_Click(object sender, EventArgs e)
+        private void cmbEndNode_SelectedIndexChanged(object sender, EventArgs e) // End düğümü seçilsin
         {
+            if (cmbEndNode.SelectedItem == null)
+                return;
 
-        }
+            ComboNodeItem selected = (ComboNodeItem)cmbEndNode.SelectedItem;
+            _targetNodeId = selected.Id;
 
-        private void btnDFS_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnConnectedComponents_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void cmbStartNode_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void cmbEndNode_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
+            pbCanvas.Invalidate();
         }
 
         private void button1_Click_1(object sender, EventArgs e) //Düğüm ekle butonu
@@ -775,7 +1003,7 @@ namespace GraffProjesi
                 }
                 else
                 {
-                    txtTerminal.AppendText("Tıklanan yerde düğüm yok.\r\n");
+                    WriteToTerminal("Tıklanan yerde düğüm yok.\r\n");
                 }
             }
             else if (_currentMode == EditMode.UpdateNode)
@@ -784,7 +1012,7 @@ namespace GraffProjesi
                 if (nodeId.HasValue)
                     UpdateNode(nodeId.Value);
                 else
-                    txtTerminal.AppendText("Tıklanan yerde düğüm yok.\r\n");
+                    WriteToTerminal("Tıklanan yerde düğüm yok.\r\n");
             }
             else if (_currentMode == EditMode.AddEdge)
             {
@@ -792,7 +1020,7 @@ namespace GraffProjesi
 
                 if (!nodeId.HasValue)
                 {
-                    txtTerminal.AppendText("Bir düğüme tıklayın.\r\n");
+                    WriteToTerminal("Bir düğüme tıklayın.\r\n");
                     return;
                 }
                 HandleAddEdgeClick(nodeId.Value);
@@ -802,7 +1030,7 @@ namespace GraffProjesi
                 int? nodeId = GetNodeAtPoint(e.Location);
                 if (nodeId.HasValue)
                 {
-                    txtTerminal.AppendText("Kenar silmek için çizgiye tıklayın.\r\n");
+                    WriteToTerminal("Kenar silmek için çizgiye tıklayın.\r\n");
                     return;
                 }
                 // edge kontrolü
@@ -813,8 +1041,40 @@ namespace GraffProjesi
                 }
                 else
                 {
-                    txtTerminal.AppendText("Tıklanan yerde kenar yok.\r\n");
+                    WriteToTerminal("Tıklanan yerde kenar yok.\r\n");
                 }
+            }
+            else if (_currentMode == EditMode.None) // BİLGİ GÖSTERME
+            {
+                int? nodeId = GetNodeAtPoint(e.Location);
+                if (!nodeId.HasValue)
+                    return;
+
+                var person = _people.FirstOrDefault(p => p.Id == nodeId.Value);
+                Node node = _graph.GetNode(nodeId.Value);
+
+                if (person == null || node == null)
+                    return;
+
+                int degree = _graph.GetDegree(node);
+                double interaction = node.Etkilesim;
+
+                // Komşu düğümleri al
+                var neighbors = _graph.GetNeighbors(node.Id);
+
+                string neighborText = neighbors.Count > 0
+                    ? string.Join(", ", neighbors)
+                    : "Yok";
+
+                // Terminal çıktısı
+                WriteToTerminal("\n- DÜĞÜM BİLGİLERİ -");
+                WriteToTerminal($"ID              : {node.Id}");
+                WriteToTerminal($"Ad Soyad        : {person.Name}");
+                WriteToTerminal($"Aktiflik        : {node.Aktiflik:F2}");
+                WriteToTerminal($"Etkileşim       : {interaction}");
+                WriteToTerminal($"Bağlantı Sayısı : {degree}");
+                WriteToTerminal($"Komşu Düğümler  : {neighborText}");
+                WriteToTerminal("---------------------------");
             }
         }
 
@@ -860,7 +1120,248 @@ namespace GraffProjesi
             btnAddEdge.BackColor = SystemColors.Control;
             btnDeleteEdge.BackColor = SystemColors.Control;
             btnReset.BackColor = SystemColors.Control;
+
+            // Başlangıç & hedef seçimlerini sıfırla
+            if (cmbStartNode.Items.Count > 0)
+                cmbStartNode.SelectedIndex = 0;
+
+            if (cmbEndNode.Items.Count > 0)
+                cmbEndNode.SelectedIndex = 0;
             txtTerminal.Clear();
+        }
+        // ALGORİTMA BUTONLARI
+        private void btnBFS_Click(object sender, EventArgs e)
+        {
+            if (cmbStartNode.SelectedItem == null)
+            {
+                WriteToTerminal("Lütfen başlangıç düğümü seçiniz.\n\n");
+                return;
+            }
+
+            ComboNodeItem selected = (ComboNodeItem)cmbStartNode.SelectedItem;
+            int startId = selected.Id;
+
+            BFSAlgorithm bfs = new BFSAlgorithm(_graph);
+            bfs.Execute(startId);
+
+            WriteToTerminal("BFS ile erişilebilen kullanıcılar:\n");
+            WriteToTerminal($"Başlangıç düğümü: {selected.Text}\n\n");
+
+            foreach (int id in bfs.Result)
+            {
+                var p = _people.FirstOrDefault(x => x.Id == id);
+                if (p != null)
+                    WriteToTerminal($"{p.Id} \n"); // - {p.Name} eklenebilir
+            }
+
+            WriteToTerminal($"Toplam erişilen kullanıcı sayısı: {bfs.Result.Count}\n\n");
+        }
+        private void btnDFS_Click(object sender, EventArgs e)
+        {
+            if (cmbStartNode.SelectedItem == null)
+            {
+                WriteToTerminal("Lütfen başlangıç düğümü seçiniz.\n");
+                return;
+            }
+            ComboNodeItem selected = (ComboNodeItem)cmbStartNode.SelectedItem;
+            int startId = selected.Id;
+
+            DFSAlgorithm dfs = new DFSAlgorithm(_graph);
+            dfs.Execute(startId);
+
+            WriteToTerminal("\nDFS ile erişilebilen kullanıcılar:\n");
+            WriteToTerminal($"Başlangıç düğümü: {selected.Text}\n\n");
+
+            foreach (int id in dfs.Result)
+            {
+                var p = _people.FirstOrDefault(x => x.Id == id);
+                WriteToTerminal($"{id} - {p?.Name}\n");
+            }
+
+            WriteToTerminal($"Toplam erişilen kullanıcı sayısı: {dfs.Result.Count}\n");
+        }
+
+        private void btnDijkstra_Click(object sender, EventArgs e)
+        {
+            if (cmbStartNode.SelectedItem == null) // Başlangıç düğümü seçili mi kontrol et
+            {
+                WriteToTerminal("Lütfen başlangıç düğümü seçiniz.");
+                return;
+            }
+
+            var startItem = (ComboNodeItem)cmbStartNode.SelectedItem;  // Seçilen başlangıç düğümünü al
+            ComboNodeItem endItem = cmbEndNode.SelectedItem as ComboNodeItem;
+
+            var dijkstra = new DijkstraAlgorithm(_graph);  // Dijkstra algoritmasını çalıştır
+            dijkstra.Execute(startItem.Id);
+            //txtTerminal.Clear();
+            WriteToTerminal("");
+            WriteToTerminal("- Dijkstra Algoritması -");
+            WriteToTerminal("");
+
+            //  İKİ DÜĞÜM SEÇİLİ İSE
+            if (endItem != null)
+            {
+                WriteToTerminal($"Başlangıç: {startItem.Text}");
+                WriteToTerminal($"Hedef    : {endItem.Text}");
+
+                var path = dijkstra.GetPath(endItem.Id);
+
+                if (path.Count <= 1)
+                {
+                    WriteToTerminal("Sonuç: Yol bulunamadı.\n");
+                    return;
+                }
+
+                WriteToTerminal("Sonuç: En Kısa Yol");
+                WriteToTerminal("Yol: " + string.Join(" -> ", path));
+                WriteToTerminal($"Toplam Maliyet: {dijkstra.Distances[endItem.Id]:F2}");
+            }
+            //  SADECE BAŞLANGIÇ VAR İSE
+            else
+            {
+                WriteToTerminal($"Başlangıç: {startItem.Text}");
+
+                foreach (var kvp in dijkstra.Distances.OrderBy(x => x.Value))
+                {
+                    var person = _people.FirstOrDefault(p => p.Id == kvp.Key);
+
+                    if (double.IsInfinity(kvp.Value))
+                        WriteToTerminal($"{kvp.Key} - {person?.Name} : Ulaşılamıyor");
+                    else
+                        WriteToTerminal($"{kvp.Key} - {person?.Name} : {kvp.Value:F2}");
+                }
+            }
+            WriteToTerminal("\n");
+        }
+
+        /* Dijkstra algoritması, başlangıç düğümünden tüm düğümlere olan en kısa yolları hesaplarken;
+        A* algoritması, hedef düğümü de dikkate alarak yalnızca en olası yolları değerlendirir ve bu sayede daha hızlı sonuç üretir. */
+        private void btnAStar_Click(object sender, EventArgs e)
+        {
+            //txtTerminal.Clear();
+            // Başlangıç seçilmiş mi?
+            if (!(cmbStartNode.SelectedItem is ComboNodeItem startItem) ||
+                startItem.Id == -1)
+            {
+                WriteToTerminal("Lütfen başlangıç düğümünü seçiniz.");
+                return;
+            }
+            // Hedef seçilmiş mi?
+            if (!(cmbEndNode.SelectedItem is ComboNodeItem endItem) ||
+                endItem.Id == -1)
+            {
+                WriteToTerminal("Lütfen hedef düğümü seçiniz.");
+                return;
+            }
+
+            // A* çalıştır
+            var aStar = new AStarAlgorithm(_graph);
+            aStar.Execute(startItem.Id, endItem.Id);
+            var path = aStar.GetPath(endItem.Id);
+
+            WriteToTerminal("\n- A* Algoritması -");
+            WriteToTerminal($"Başlangıç: {startItem.Text}");
+            WriteToTerminal($"Hedef: {endItem.Text}");
+
+            // Yol bulunamadıysa
+            if (path.Count <= 1)
+            {
+                WriteToTerminal("Sonuç: Yol bulunamadı.");
+                return;
+            }
+            WriteToTerminal("Sonuç: En Kısa Yol");
+            WriteToTerminal("Yol: " + string.Join(" -> ", path));
+            WriteToTerminal($"Toplam Maliyet: {aStar.TotalCost:F4}\n");
+        }
+
+        private void btnConnectedComponents_Click(object sender, EventArgs e)
+        {
+            var cc = new ConnectedComponentsAlgorithm(_graph);
+            cc.Execute();
+
+            WriteToTerminal("\n- Bağlı Bileşenler (Topluluk Analizi) -");
+            WriteToTerminal($"Toplam Topluluk Sayısı: {cc.Components.Count}\n");
+
+            int index = 1;
+            int maxSize = cc.Components.Max(c => c.Count);
+
+            foreach (var component in cc.Components)
+            {
+                string type = "";
+
+                if (component.Count == 1)
+                    type = "(İzole)";
+                else if (component.Count == maxSize)
+                    type = "(Baskın Grup)";
+
+                WriteToTerminal($"Topluluk {index} {type} - {component.Count} Kişi:");
+                WriteToTerminal("Üyeler: " + string.Join(", ", component));
+                WriteToTerminal("");
+                index++;
+            }
+            WriteToTerminal("\nAnaliz Tamamlandı.\n");
+        }
+
+        // WELSH POWELL Kodları
+        private void btnWelshPowell_Click(object sender, EventArgs e)
+        {
+            // Eğer renklendirme açıksa kapat
+            if (_isColoringActive)
+            {
+                _nodeColors = null;
+                _isColoringActive = false;
+
+                dgvColoring.Rows.Clear();
+                WriteToTerminal("Welsh–Powell renklendirme kapatıldı.");
+
+                pbCanvas.Invalidate(); // Canvas'ı yeniden çiz
+                return;
+            }
+
+            // Grafik boş mu?
+            if (_graph.GetAllNodes().Count() == 0)
+            {
+                WriteToTerminal("Graf boş. Önce düğüm ekleyiniz.");
+                return;
+            }
+
+            // Welsh–Powell algoritmasını çalıştır
+            var coloring = new Coloring(_graph);
+            _nodeColors = coloring.ApplyWelshPowell();
+            _isColoringActive = true;
+
+
+            dgvColoring.Rows.Clear();      // Tabloyu temizle
+
+            // Tabloyu RENK NUMARASINA GÖRE sıralı doldur
+            foreach (var pair in _nodeColors.OrderBy(x => x.Value))
+            {
+                dgvColoring.Rows.Add(pair.Key, pair.Value);
+            }
+
+            WriteToTerminal("\n- Welsh–Powell Graf Renklendirme -\n");
+            WriteToTerminal($"Toplam kullanılan renk sayısı: {_nodeColors.Values.Distinct().Count()}");
+            WriteToTerminal("Aynı renge sahip düğümler birbirine komşu değildir.");
+            WriteToTerminal("\nRenklendirme tamamlandı.\n");
+
+            pbCanvas.Invalidate(); // Canvas'ı yenile
+        }
+
+        private Color GetColorByIndex(int index)
+        {
+            Color[] colors =
+                    {
+                Color.LightBlue,
+                Color.LightPink,
+                Color.LightSalmon,
+                Color.LightGreen,
+                Color.LightYellow,
+                Color.LightCyan,
+                Color.Plum,
+                Color.Khaki
+            };
+            return colors[(index - 1) % colors.Length];
         }
     } // class kapanışı
 } // namespace kapanışı

@@ -4,6 +4,9 @@ using System.Collections.Generic;
 namespace GraffProjesi
 {
     // Breadth-First Search algoritması
+    /* Seçilen düğümden erişilebilen tüm düğümleri yazdırır.
+     * Queue, bağlı tüm düğümler listelenir
+     */
     public class BFSAlgorithm : Algorithm
     {
         public List<int> Result { get; private set; }
