@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace GraffProjesi   // Program.cs ile AYNI namespace
 {
@@ -12,6 +13,10 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
     {
         // Düğümler: Id -> Node
         private Dictionary<int, Node> _nodes;
+        //key düğümün idsi Node düğümün kendisi
+        //burda her id ye karşılık bi node tutuluyo
+
+
         //<anahtar(key),değer> tablosu aslında 
         //burda bizim keyimiz düğümün idsi
         //değerimiz ise o düğümüm komşularının listesi
@@ -22,25 +27,28 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
 
         // Komşuluk listesi: Node -> Komşu Node'lar
         private Dictionary<Node, List<Node>> _adjacency;
+        //burda her idye nodea karşılık komşu listedi tutuluyo 
+
         private readonly Random _rnd = new Random();
 
         public Graph() // kurucu metot
         {
-            //burda ise nesne yarattık
+            //üstte alan yarattık burda ise o alana 
+            // nesne yarattık
             //Bellekte yeni bir Dictionary<int, List<int>> yaratıp adresini alanıma atadık
             _nodes = new Dictionary<int, Node>();
             _adjacency = new Dictionary<Node, List<Node>>();
             //yeni graf oluştuğunda içinde düğüm bağlantı falan olmayan yeni bi sözlük oluşturuyo
         }
 
-        // -------- Node işlemleri --------
+        // Node işlemleri 
         public Node AddNode(int id)// eklenecek olan düğümün id'si
         {
             if (!_nodes.ContainsKey(id))// eğer bu id daha önce eklenmediyse
             {
-                Node node = new Node(id);
-                _nodes[id] = node;
-                _adjacency[node] = new List<Node>();//sözlüğe id numaralı düğüm için boş komşu listesi açılır
+                Node node = new Node(id);//bellekte yeni düğüm oluşturuyroyz
+                _nodes[id] = node;//bu yeni nesneyi bu id ile _nodes sözlüğüne kaydediiyorum
+                _adjacency[node] = new List<Node>();//sözlüğe id numaralı düğüm için boş komşu listesi açıyoruz
             }
             return _nodes[id];
         }
@@ -64,38 +72,41 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
         }
 
         public Node GetNode(int id) //Hatalı veri engellenmesi için
-        {
+        {//burda istenen node varsa getirir yoksa null döndğrğr
             return _nodes.ContainsKey(id) ? _nodes[id] : null;
         }
 
         public IEnumerable<Node> GetAllNodes()
-        {
+        {//burda bütün nodeları döndürme kısmımız
             return _nodes.Values;
         }
 
         public void RemoveNode(int id)
         {
             if (!_nodes.ContainsKey(id)) return;
-
+            //ilk önce node var mı diye baktık 
             Node node = _nodes[id];
-
+            //burda silinmesi istenen nodeun idsi ile o nodeu bulduk
             // Tüm komşuların adjacency listesinden çıkar
             foreach (var neighbors in _adjacency.Values)
                 neighbors.Remove(node);
 
-            _adjacency.Remove(node);
-            _nodes.Remove(id);
+            _adjacency.Remove(node);//bu nodeun komşuluklistesini sil
+            _nodes.Remove(id);// bu nodeu sil
         }
 
         // -------- Edge işlemleri --------
 
         public void AddEdge(int fromId, int toId)
-        {
+        {//burda Node tipinde iki nesen oluşturduk
+            //ilkinde girlen id yi sözlüğümüz sayesinde eşleşen nodeu alır ve from a atar
+            //diğerininde aynı mantıkla id girilnce çıkan nodeu to ya atar
             Node from = _nodes[fromId];
             Node to = _nodes[toId];
 
             if (!_adjacency[from].Contains(to))
-            {
+            {//burda fromdakki nodeun komşuluk listesinde to var mı diye bakar
+                //forumun k. listesine to yu,to nunkine from mu ekleriz
                 _adjacency[from].Add(to);
                 _adjacency[to].Add(from);
 
@@ -106,27 +117,29 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
         }
 
         public bool HasEdge(int fromId, int toId)
-        {
-            if (!_nodes.ContainsKey(fromId) || !_nodes.ContainsKey(toId))
+        {//seçilenler arasında bağlantı var mı diye kontrol
+            if (!_nodes.ContainsKey(fromId) || !_nodes.ContainsKey(toId))//Bu id’lerden biri graph’ta var mı yok mu baktık
                 return false;
 
             Node from = _nodes[fromId];
             Node to = _nodes[toId];
-
+            //Node nesneleri bulunuyo
             return _adjacency[from].Contains(to);
+            //from’un komşu listesinde to var mı?varsa true
         }
 
-        public List<Node> GetNeighbors(Node node)
+        public List<Node> GetNeighbors(Node node)//Bu node’un komşularını getir
         {
             if (_adjacency.ContainsKey(node))
                 return _adjacency[node];
-
-            return new List<Node>();
+            //“Bu node adjacency tablosunda var mı?”
+            //varsa onun komşu listesini direkt ver
+            return new List<Node>();//yoksa null
         }
 
         // ID parametresi alan versiyon (MainForm'daki çizim için kolaylık sağlar)
         public List<int> GetNeighbors(int id)
-        {
+        {//verilen idli nodeun komşu listesin getirir
             if (!_nodes.ContainsKey(id)) return new List<int>();
 
             Node node = _nodes[id];
@@ -169,7 +182,7 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
             return 0;
         }
 
-        // -------- Grafı temizleme --------
+        // Grafı temizleme 
         public void Clear()
         {
             _nodes.Clear();

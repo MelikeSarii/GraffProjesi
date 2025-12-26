@@ -32,6 +32,8 @@
             this.btnKucukGraf = new System.Windows.Forms.Button();
             this.btnBuyukGraf = new System.Windows.Forms.Button();
             this.dgvTopNodes = new System.Windows.Forms.DataGridView();
+            this.colNodeID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colDegree = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pbCanvas = new System.Windows.Forms.PictureBox();
             this.tlbMain = new System.Windows.Forms.TableLayoutPanel();
             this.pnlRight = new System.Windows.Forms.Panel();
@@ -57,21 +59,19 @@
             this.flpLeft = new System.Windows.Forms.FlowLayoutPanel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.lblColoringTitle = new System.Windows.Forms.Label();
-            this.dgvColoring = new System.Windows.Forms.DataGridView();
             this.label3 = new System.Windows.Forms.Label();
-            this.btnDeleteEdge = new System.Windows.Forms.Button();
-            this.btnAddEdge = new System.Windows.Forms.Button();
-            this.btnUpdateNode = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.btnReset = new System.Windows.Forms.Button();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.lblColoringTitle = new System.Windows.Forms.Label();
             this.btnAddNode = new System.Windows.Forms.Button();
+            this.dgvColoring = new System.Windows.Forms.DataGridView();
             this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.label7 = new System.Windows.Forms.Label();
-            this.colNodeID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colDegree = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.btnReset = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.btnUpdateNode = new System.Windows.Forms.Button();
+            this.btnDeleteEdge = new System.Windows.Forms.Button();
+            this.btnAddEdge = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTopNodes)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbCanvas)).BeginInit();
             this.tlbMain.SuspendLayout();
@@ -141,6 +141,20 @@
             this.dgvTopNodes.Size = new System.Drawing.Size(273, 175);
             this.dgvTopNodes.TabIndex = 5;
             // 
+            // colNodeID
+            // 
+            this.colNodeID.HeaderText = "Düğüm ID";
+            this.colNodeID.MinimumWidth = 4;
+            this.colNodeID.Name = "colNodeID";
+            this.colNodeID.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // colDegree
+            // 
+            this.colDegree.HeaderText = "Bağlantı Sayısı";
+            this.colDegree.MinimumWidth = 4;
+            this.colDegree.Name = "colDegree";
+            this.colDegree.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
             // pbCanvas
             // 
             this.pbCanvas.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -150,7 +164,7 @@
             this.pbCanvas.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pbCanvas.Location = new System.Drawing.Point(478, 3);
             this.pbCanvas.Name = "pbCanvas";
-            this.pbCanvas.Size = new System.Drawing.Size(945, 1127);
+            this.pbCanvas.Size = new System.Drawing.Size(945, 1049);
             this.pbCanvas.TabIndex = 4;
             this.pbCanvas.TabStop = false;
             this.pbCanvas.Click += new System.EventHandler(this.pbCanvas_Click_1);
@@ -175,7 +189,7 @@
             this.tlbMain.RowCount = 1;
             this.tlbMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tlbMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 1125F));
-            this.tlbMain.Size = new System.Drawing.Size(1902, 1133);
+            this.tlbMain.Size = new System.Drawing.Size(1902, 1055);
             this.tlbMain.TabIndex = 5;
             // 
             // pnlRight
@@ -185,7 +199,7 @@
             this.pnlRight.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlRight.Location = new System.Drawing.Point(1429, 3);
             this.pnlRight.Name = "pnlRight";
-            this.pnlRight.Size = new System.Drawing.Size(470, 1127);
+            this.pnlRight.Size = new System.Drawing.Size(470, 1049);
             this.pnlRight.TabIndex = 0;
             // 
             // flpRight
@@ -198,7 +212,7 @@
             this.flpRight.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.flpRight.Location = new System.Drawing.Point(0, 0);
             this.flpRight.Name = "flpRight";
-            this.flpRight.Size = new System.Drawing.Size(470, 1127);
+            this.flpRight.Size = new System.Drawing.Size(470, 1049);
             this.flpRight.TabIndex = 3;
             this.flpRight.WrapContents = false;
             // 
@@ -413,7 +427,7 @@
             this.pnlLeft.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlLeft.Location = new System.Drawing.Point(3, 3);
             this.pnlLeft.Name = "pnlLeft";
-            this.pnlLeft.Size = new System.Drawing.Size(469, 1127);
+            this.pnlLeft.Size = new System.Drawing.Size(469, 1049);
             this.pnlLeft.TabIndex = 5;
             // 
             // flpLeft
@@ -425,7 +439,7 @@
             this.flpLeft.Controls.Add(this.label3);
             this.flpLeft.Controls.Add(this.groupBox2);
             this.flpLeft.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.flpLeft.Location = new System.Drawing.Point(0, 0);
+            this.flpLeft.Location = new System.Drawing.Point(0, -39);
             this.flpLeft.Name = "flpLeft";
             this.flpLeft.Size = new System.Drawing.Size(469, 1166);
             this.flpLeft.TabIndex = 4;
@@ -454,6 +468,17 @@
             this.label4.TabIndex = 3;
             this.label4.Text = "Graf Seçimi";
             // 
+            // label3
+            // 
+            this.label3.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.label3.Location = new System.Drawing.Point(133, 289);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(202, 20);
+            this.label3.TabIndex = 6;
+            this.label3.Text = "Düğüm ve Kenar İşlemleri";
+            // 
             // groupBox2
             // 
             this.groupBox2.AutoSize = true;
@@ -475,6 +500,16 @@
             this.groupBox2.TabIndex = 3;
             this.groupBox2.TabStop = false;
             // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.label7.Location = new System.Drawing.Point(152, 118);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(156, 20);
+            this.label7.TabIndex = 8;
+            this.label7.Text = "Merkezilik (Degree)";
+            // 
             // lblColoringTitle
             // 
             this.lblColoringTitle.AutoSize = true;
@@ -484,6 +519,18 @@
             this.lblColoringTitle.Size = new System.Drawing.Size(255, 20);
             this.lblColoringTitle.TabIndex = 7;
             this.lblColoringTitle.Text = "Welsh–Powell Graf Renklendirme";
+            // 
+            // btnAddNode
+            // 
+            this.btnAddNode.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnAddNode.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnAddNode.Location = new System.Drawing.Point(67, 12);
+            this.btnAddNode.Name = "btnAddNode";
+            this.btnAddNode.Size = new System.Drawing.Size(132, 27);
+            this.btnAddNode.TabIndex = 0;
+            this.btnAddNode.Text = "Düğüm Ekle";
+            this.btnAddNode.UseVisualStyleBackColor = true;
+            this.btnAddNode.Click += new System.EventHandler(this.button1_Click_1);
             // 
             // dgvColoring
             // 
@@ -504,16 +551,53 @@
             this.dgvColoring.Size = new System.Drawing.Size(273, 464);
             this.dgvColoring.TabIndex = 5;
             // 
-            // label3
+            // Column1
             // 
-            this.label3.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.label3.Location = new System.Drawing.Point(133, 289);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(202, 20);
-            this.label3.TabIndex = 6;
-            this.label3.Text = "Düğüm ve Kenar İşlemleri";
+            this.Column1.HeaderText = "Düğüm ID";
+            this.Column1.MinimumWidth = 4;
+            this.Column1.Name = "Column1";
+            // 
+            // Column2
+            // 
+            this.Column2.HeaderText = "Renk Kodu";
+            this.Column2.MinimumWidth = 4;
+            this.Column2.Name = "Column2";
+            // 
+            // btnReset
+            // 
+            this.btnReset.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnReset.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnReset.Location = new System.Drawing.Point(253, 78);
+            this.btnReset.Name = "btnReset";
+            this.btnReset.Size = new System.Drawing.Size(132, 27);
+            this.btnReset.TabIndex = 5;
+            this.btnReset.Text = "Temizle";
+            this.btnReset.UseVisualStyleBackColor = true;
+            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
+            // 
+            // button2
+            // 
+            this.button2.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.button2.Location = new System.Drawing.Point(67, 45);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(132, 27);
+            this.button2.TabIndex = 1;
+            this.button2.Text = "Düğüm Sil";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // btnUpdateNode
+            // 
+            this.btnUpdateNode.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnUpdateNode.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnUpdateNode.Location = new System.Drawing.Point(67, 78);
+            this.btnUpdateNode.Name = "btnUpdateNode";
+            this.btnUpdateNode.Size = new System.Drawing.Size(132, 27);
+            this.btnUpdateNode.TabIndex = 2;
+            this.btnUpdateNode.Text = "Düğüm Güncelle";
+            this.btnUpdateNode.UseVisualStyleBackColor = true;
+            this.btnUpdateNode.Click += new System.EventHandler(this.btnUpdateNode_Click);
             // 
             // btnDeleteEdge
             // 
@@ -539,95 +623,11 @@
             this.btnAddEdge.UseVisualStyleBackColor = true;
             this.btnAddEdge.Click += new System.EventHandler(this.btnAddEdge_Click);
             // 
-            // btnUpdateNode
-            // 
-            this.btnUpdateNode.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btnUpdateNode.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnUpdateNode.Location = new System.Drawing.Point(67, 78);
-            this.btnUpdateNode.Name = "btnUpdateNode";
-            this.btnUpdateNode.Size = new System.Drawing.Size(132, 27);
-            this.btnUpdateNode.TabIndex = 2;
-            this.btnUpdateNode.Text = "Düğüm Güncelle";
-            this.btnUpdateNode.UseVisualStyleBackColor = true;
-            this.btnUpdateNode.Click += new System.EventHandler(this.btnUpdateNode_Click);
-            // 
-            // button2
-            // 
-            this.button2.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.button2.Location = new System.Drawing.Point(67, 45);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(132, 27);
-            this.button2.TabIndex = 1;
-            this.button2.Text = "Düğüm Sil";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // btnReset
-            // 
-            this.btnReset.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btnReset.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnReset.Location = new System.Drawing.Point(253, 78);
-            this.btnReset.Name = "btnReset";
-            this.btnReset.Size = new System.Drawing.Size(132, 27);
-            this.btnReset.TabIndex = 5;
-            this.btnReset.Text = "Temizle";
-            this.btnReset.UseVisualStyleBackColor = true;
-            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
-            // 
-            // btnAddNode
-            // 
-            this.btnAddNode.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btnAddNode.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnAddNode.Location = new System.Drawing.Point(67, 12);
-            this.btnAddNode.Name = "btnAddNode";
-            this.btnAddNode.Size = new System.Drawing.Size(132, 27);
-            this.btnAddNode.TabIndex = 0;
-            this.btnAddNode.Text = "Düğüm Ekle";
-            this.btnAddNode.UseVisualStyleBackColor = true;
-            this.btnAddNode.Click += new System.EventHandler(this.button1_Click_1);
-            // 
-            // Column1
-            // 
-            this.Column1.HeaderText = "Düğüm ID";
-            this.Column1.MinimumWidth = 4;
-            this.Column1.Name = "Column1";
-            // 
-            // Column2
-            // 
-            this.Column2.HeaderText = "Renk Kodu";
-            this.Column2.MinimumWidth = 4;
-            this.Column2.Name = "Column2";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.label7.Location = new System.Drawing.Point(152, 118);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(156, 20);
-            this.label7.TabIndex = 8;
-            this.label7.Text = "Merkezilik (Degree)";
-            // 
-            // colNodeID
-            // 
-            this.colNodeID.HeaderText = "Düğüm ID";
-            this.colNodeID.MinimumWidth = 4;
-            this.colNodeID.Name = "colNodeID";
-            this.colNodeID.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // colDegree
-            // 
-            this.colDegree.HeaderText = "Bağlantı Sayısı";
-            this.colDegree.MinimumWidth = 4;
-            this.colDegree.Name = "colDegree";
-            this.colDegree.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1902, 1133);
+            this.ClientSize = new System.Drawing.Size(1902, 1055);
             this.Controls.Add(this.tlbMain);
             this.MinimumSize = new System.Drawing.Size(1200, 700);
             this.Name = "MainForm";

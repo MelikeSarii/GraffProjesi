@@ -2,7 +2,8 @@
 
 namespace GraffProjesi
 {
-    // Artık kişi = sadece Id + Name
+  //bu sınıf kullanıcının bilgilerini gösterdiğimiz sınıf gibi düşünebiliriz
+  //Ayşe Yılmaz...
     public class Person
     {
         public int Id { get; set; }
