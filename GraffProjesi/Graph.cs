@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace GraffProjesi   // Program.cs ile AYNI namespace
 {
@@ -284,5 +285,161 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
 
             return 1.0 / (1.0 + uzaklik);
         }
+        // ---------------- CSV EXPORT / IMPORT ----------------
+
+        public void ExportToCsv(string folderPath)
+        {
+            Directory.CreateDirectory(folderPath);
+
+            string nodesPath = Path.Combine(folderPath, "nodes.csv");
+            string edgesPath = Path.Combine(folderPath, "edges.csv");
+
+            // 1) Nodes
+            var sbNodes = new StringBuilder();
+            sbNodes.AppendLine("Id,Aktiflik,Etkilesim,BaglantiSayisi,Name,PosX,PosY");
+
+            foreach (var n in _nodes.Values.OrderBy(x => x.Id))
+            {
+                // Name içinde virgül olabilir diye basit escape (tırnak)
+                string name = n.Name ?? "";
+                if (name.Contains(",")) name = $"\"{name.Replace("\"", "\"\"")}\"";
+
+                int x = n.Position.X;
+                int y = n.Position.Y;
+
+                sbNodes.AppendLine($"{n.Id},{n.Aktiflik},{n.Etkilesim},{n.BaglantiSayisi},{name},{x},{y}");
+            }
+
+            File.WriteAllText(nodesPath, sbNodes.ToString(), Encoding.UTF8);
+
+            // 2) Edges (yönsüz: aynı kenarı iki kere yazmamak için)
+            var sbEdges = new StringBuilder();
+            sbEdges.AppendLine("FromId,ToId");
+
+            var written = new HashSet<string>();
+            foreach (var from in _adjacency.Keys)
+            {
+                foreach (var to in _adjacency[from])
+                {
+                    int a = Math.Min(from.Id, to.Id);
+                    int b = Math.Max(from.Id, to.Id);
+                    string key = $"{a}-{b}";
+                    if (!written.Add(key)) continue;
+
+                    sbEdges.AppendLine($"{a},{b}");
+                }
+            }
+
+            File.WriteAllText(edgesPath, sbEdges.ToString(), Encoding.UTF8);
+        }
+
+        public void ImportFromCsv(string folderPath)
+        {
+            string nodesPath = Path.Combine(folderPath, "nodes.csv");
+            string edgesPath = Path.Combine(folderPath, "edges.csv");
+
+            if (!File.Exists(nodesPath))
+                throw new FileNotFoundException("nodes.csv bulunamadı", nodesPath);
+
+            if (!File.Exists(edgesPath))
+                throw new FileNotFoundException("edges.csv bulunamadı", edgesPath);
+
+            Clear();
+
+            // 1) Nodes oku
+            var nodeLines = File.ReadAllLines(nodesPath, Encoding.UTF8)
+                                .Select(l => l.Trim())
+                                .Where(l => !string.IsNullOrWhiteSpace(l))
+                                .ToList();
+
+            // başlık satırını geç
+            for (int i = 1; i < nodeLines.Count; i++)
+            {
+                // Basit CSV parse: Name alanı tırnaklı olabilir.
+                // Çok karmaşık CSV beklemiyoruz; virgül varsa zaten "..." yapıyoruz.
+                var parts = SplitCsvLine(nodeLines[i]);
+                if (parts.Count < 7) continue;
+
+                int id = int.Parse(parts[0]);
+                double aktiflik = double.Parse(parts[1]);
+                double etkilesim = double.Parse(parts[2]);
+                int baglantiSayisi = int.Parse(parts[3]);
+                string name = parts[4];
+                int posX = int.Parse(parts[5]);
+                int posY = int.Parse(parts[6]);
+
+                var n = AddNode(id, aktiflik, etkilesim, 0); // BaglantiSayisi'nı edge'lerden hesaplayacağız
+                n.Name = name;
+                n.Position = new System.Drawing.Point(posX, posY);
+
+                // dosyada gelen baglantiSayisi varsa bile,
+                // graf doğru olsun diye kenarlardan tekrar hesaplamak daha sağlıklı.
+                // O yüzden şimdilik 0 veriyoruz.
+            }
+
+            // 2) Edges oku
+            var edgeLines = File.ReadAllLines(edgesPath, Encoding.UTF8)
+                                .Select(l => l.Trim())
+                                .Where(l => !string.IsNullOrWhiteSpace(l))
+                                .ToList();
+
+            for (int i = 1; i < edgeLines.Count; i++)
+            {
+                var parts = edgeLines[i].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (parts.Length < 2) continue;
+
+                int fromId = int.Parse(parts[0]);
+                int toId = int.Parse(parts[1]);
+
+                // node yoksa oluştur (ihtiyaç olursa)
+                if (!_nodes.ContainsKey(fromId)) AddNode(fromId);
+                if (!_nodes.ContainsKey(toId)) AddNode(toId);
+
+                AddEdge(fromId, toId);
+            }
+
+            // BaglantiSayisi zaten AddEdge içinde artıyor.
+        }
+
+        private static List<string> SplitCsvLine(string line)
+        {
+            var result = new List<string>();
+            var sb = new StringBuilder();
+            bool inQuotes = false;
+
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+
+                if (c == '"')
+                {
+                    // "" -> tek "
+                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        sb.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;
+                    }
+                }
+                else if (c == ',' && !inQuotes)
+                {
+                    result.Add(sb.ToString());
+                    sb.Clear();
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+
+            result.Add(sb.ToString());
+            return result;
+        }
+
+
     }
 }
