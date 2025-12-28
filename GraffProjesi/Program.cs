@@ -4,13 +4,14 @@ using System.Windows.Forms;
 
 class Program
 {
+    [STAThread] //Dosya seçimi için
     static void Main()
     {
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.Run(new MainForm()); // Yeni oluşturduğunuz formun adı
     }
-    //static void Main()
+    //static void Main() MAİNFORM OLUŞTURMADAN ÖNCEKİ ALGORİTMALARIN KONTROLÜ İÇİN KONSOL EKRANIMIZDI..
     //{
     //    Console.WriteLine("===== GRAF OLUŞTURULUYOR =====\n");
 

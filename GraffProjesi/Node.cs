@@ -14,7 +14,7 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
 
         // UI için
         public string Name { get; set; }
-        public Point Position { get; set; }
+        public PointF Position { get; set; }
 
         // --- Dinamik ağırlık hesabında kullanılan özellikler ---
         public double Aktiflik { get; set; }

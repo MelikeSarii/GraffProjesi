@@ -2,6 +2,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -56,19 +58,27 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
 
         public Node AddNode(int id, double aktiflik, double etkilesim, int baglantiSayisi) // Düğüme özelliklerini ekleme
         {
+            //if (!_nodes.ContainsKey(id))
+            //{
+            //    Node node = new Node(
+            //        id,
+            //        aktiflik,       
+            //        etkilesim,      
+            //        baglantiSayisi
+            //    );
+
+            //    _nodes[id] = node;
+            //    _adjacency[node] = new List<Node>();
+            //}
+
+            //return _nodes[id];
+
             if (!_nodes.ContainsKey(id))
             {
-                Node node = new Node(
-                    id,
-                    aktiflik,       
-                    etkilesim,      
-                    baglantiSayisi
-                );
-
+                Node node = new Node(id, aktiflik, etkilesim, baglantiSayisi);
                 _nodes[id] = node;
                 _adjacency[node] = new List<Node>();
             }
-
             return _nodes[id];
         }
 
@@ -296,7 +306,7 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
 
             // 1) Nodes
             var sbNodes = new StringBuilder();
-            sbNodes.AppendLine("Id,Aktiflik,Etkilesim,BaglantiSayisi,Name,PosX,PosY");
+            sbNodes.AppendLine("Id;Aktiflik;Etkilesim;BaglantiSayisi;Name;Komsular;PosX;PosY"); //Daha güzel gözükmesi için değiştirdim
 
             foreach (var n in _nodes.Values.OrderBy(x => x.Id))
             {
@@ -304,10 +314,29 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
                 string name = n.Name ?? "";
                 if (name.Contains(",")) name = $"\"{name.Replace("\"", "\"\"")}\"";
 
-                int x = n.Position.X;
-                int y = n.Position.Y;
+                // Komşu düğümleri de göstersin
+                var neighbors = _adjacency[n]
+                    .Select(node => node.Id)
+                    .OrderBy(id => id)
+                    .ToList();
 
-                sbNodes.AppendLine($"{n.Id},{n.Aktiflik},{n.Etkilesim},{n.BaglantiSayisi},{name},{x},{y}");
+                string komsular = neighbors.Any()
+                    ? string.Join(",", neighbors)
+                    : "-";
+
+                float x = n.Position.X;
+                float y = n.Position.Y;
+
+                sbNodes.AppendLine( // Daha güzel görsel için değiştirdim
+                    $"{n.Id};" +
+                    $"{n.Aktiflik.ToString(CultureInfo.InvariantCulture)};" +
+                    $"{n.Etkilesim.ToString(CultureInfo.InvariantCulture)};" +
+                    $"{n.BaglantiSayisi};" +
+                    $"{name};" +
+                    $"{komsular};" +
+                    $"{x};" +
+                    $"{y}"
+                );
             }
 
             File.WriteAllText(nodesPath, sbNodes.ToString(), Encoding.UTF8);
@@ -336,14 +365,11 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
         public void ImportFromCsv(string folderPath)
         {
             string nodesPath = Path.Combine(folderPath, "nodes.csv");
-            string edgesPath = Path.Combine(folderPath, "edges.csv");
 
             if (!File.Exists(nodesPath))
                 throw new FileNotFoundException("nodes.csv bulunamadı", nodesPath);
 
-            if (!File.Exists(edgesPath))
-                throw new FileNotFoundException("edges.csv bulunamadı", edgesPath);
-
+            // Grafı sıfırla
             Clear();
 
             // 1) Nodes oku
@@ -355,91 +381,68 @@ namespace GraffProjesi   // Program.cs ile AYNI namespace
             // başlık satırını geç
             for (int i = 1; i < nodeLines.Count; i++)
             {
-                // Basit CSV parse: Name alanı tırnaklı olabilir.
-                // Çok karmaşık CSV beklemiyoruz; virgül varsa zaten "..." yapıyoruz.
-                var parts = SplitCsvLine(nodeLines[i]);
-                if (parts.Count < 7) continue;
+                // Basit CSV parse:
+                // Çok karmaşık CSV beklemiyoruz; ayırıcı olarak ; kullanıyoruz
+                var parts = nodeLines[i].Split(';');
+                if (parts.Length < 8) continue;
 
                 int id = int.Parse(parts[0]);
-                double aktiflik = double.Parse(parts[1]);
-                double etkilesim = double.Parse(parts[2]);
-                int baglantiSayisi = int.Parse(parts[3]);
-                string name = parts[4];
-                int posX = int.Parse(parts[5]);
-                int posY = int.Parse(parts[6]);
 
-                var n = AddNode(id, aktiflik, etkilesim, 0); // BaglantiSayisi'nı edge'lerden hesaplayacağız
+                double aktiflik = double.Parse(
+                    parts[1].Replace(',', '.'),
+                    CultureInfo.InvariantCulture
+                );
+
+                double etkilesim = double.Parse(
+                    parts[2].Replace(',', '.'),
+                    CultureInfo.InvariantCulture
+                );
+
+                // BaglantiSayisi CSV'de olsa bile,
+                // graf doğru olsun diye kenarlardan tekrar hesaplanacak
+                int baglantiSayisi = int.Parse(parts[3]);
+
+                string name = parts[4];
+
+                int posX = int.Parse(parts[6]);
+                int posY = int.Parse(parts[7]);
+
+                // Düğümü ekle
+                var n = AddNode(id, aktiflik, etkilesim, 0);
                 n.Name = name;
-                n.Position = new System.Drawing.Point(posX, posY);
+                n.Position = new Point(posX, posY);
 
                 // dosyada gelen baglantiSayisi varsa bile,
                 // graf doğru olsun diye kenarlardan tekrar hesaplamak daha sağlıklı.
                 // O yüzden şimdilik 0 veriyoruz.
             }
 
-            // 2) Edges oku
-            var edgeLines = File.ReadAllLines(edgesPath, Encoding.UTF8)
-                                .Select(l => l.Trim())
-                                .Where(l => !string.IsNullOrWhiteSpace(l))
-                                .ToList();
-
-            for (int i = 1; i < edgeLines.Count; i++)
+            // 2) Komşulukları oku (edges.csv yerine nodes.csv içinden)
+            for (int i = 1; i < nodeLines.Count; i++)
             {
-                var parts = edgeLines[i].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                if (parts.Length < 2) continue;
+                var parts = nodeLines[i].Split(';');
+                if (parts.Length < 6) continue;
 
                 int fromId = int.Parse(parts[0]);
-                int toId = int.Parse(parts[1]);
+                string komsularRaw = parts[5];
 
-                // node yoksa oluştur (ihtiyaç olursa)
-                if (!_nodes.ContainsKey(fromId)) AddNode(fromId);
-                if (!_nodes.ContainsKey(toId)) AddNode(toId);
+                if (string.IsNullOrWhiteSpace(komsularRaw))
+                    continue;
 
-                AddEdge(fromId, toId);
+                // Komşular virgülle ayrılmış
+                var neighbors = komsularRaw
+                    .Split(',')
+                    .Select(x => int.Parse(x.Trim()));
+
+                foreach (var toId in neighbors)
+                {
+                    // yönsüz graf olduğu için çift kenar eklememek adına
+                    if (fromId < toId)
+                        AddEdge(fromId, toId);
+                }
             }
 
             // BaglantiSayisi zaten AddEdge içinde artıyor.
         }
-
-        private static List<string> SplitCsvLine(string line)
-        {
-            var result = new List<string>();
-            var sb = new StringBuilder();
-            bool inQuotes = false;
-
-            for (int i = 0; i < line.Length; i++)
-            {
-                char c = line[i];
-
-                if (c == '"')
-                {
-                    // "" -> tek "
-                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
-                    {
-                        sb.Append('"');
-                        i++;
-                    }
-                    else
-                    {
-                        inQuotes = !inQuotes;
-                    }
-                }
-                else if (c == ',' && !inQuotes)
-                {
-                    result.Add(sb.ToString());
-                    sb.Clear();
-                }
-                else
-                {
-                    sb.Append(c);
-                }
-            }
-
-            result.Add(sb.ToString());
-            return result;
-        }
-
-
     }
 }

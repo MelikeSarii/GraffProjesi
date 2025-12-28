@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Globalization;
+using System.Diagnostics; // Süre ölçümü için
 
 using GraffProjesi;          // Graph sınıfı için
 using System.IO;                 // gerekirse
@@ -27,6 +28,9 @@ namespace GraffProjesi
 
         private Dictionary<int, int> _nodeColors; // Welsh–Powell renk sonucu: <NodeId, ColorIndex>
         private bool _isColoringActive = false;
+        
+        private int? _prevStartNodeId = null; // Welsh–Powell öncesi seçimleri saklamak için
+        private int? _prevTargetNodeId = null;
 
 
         public MainForm()
@@ -88,10 +92,35 @@ namespace GraffProjesi
                     MessageBoxIcon.Error);
             }
             CalculateRandomPositions();
+            SyncNodeDataToGraph(); //Data bilgilerini kaydedecek
             UpdateTopNodesTable();
             pbCanvas.Invalidate();
 
         }
+
+        private void SyncNodeDataToGraph()
+        {
+            if (_graph == null || _people == null || _nodePositions == null)
+                return;
+
+            foreach (var person in _people)
+            {
+                Node node = _graph.GetNode(person.Id);
+                if (node == null)
+                    continue;
+
+                // İsim UI’dan Graph’a
+                node.Name = person.Name;
+
+                // Pozisyon UI’dan Graph’a
+                if (_nodePositions.ContainsKey(person.Id))
+                {
+                    node.Position = _nodePositions[person.Id];
+                }
+            }
+        }
+
+
         //düğümleri rastgele yerleştrimek için
         private void CalculateRandomPositions()
         {
@@ -224,6 +253,7 @@ namespace GraffProjesi
 
             string name = result.Value.name;
             double aktiflik = result.Value.aktiflik;
+            int etkilesim = result.Value.etkilesim;
 
             // ID'yi belirle: Eğer liste boşsa 1, değilse son kişiden devam ettir
             int id = (_people != null && _people.Any()) ? _people.Max(p => p.Id) + 1 : 1;
@@ -245,8 +275,10 @@ namespace GraffProjesi
                 return;
             }
 
-            _graph.AddNode(id, aktiflik, 0, 0);  // Graph'a ekle
-            
+            Node node = _graph.AddNode(id, aktiflik, etkilesim, 0);  // Graph'a ekle
+            node.Name = name;            //  CSV için
+            node.Position = location;    //  CSV için
+
             _nodePositions[id] = location; // Çiz
     
             _people.Add(new Person // Listeye ekle
@@ -335,7 +367,7 @@ namespace GraffProjesi
                 if (prompt.ShowDialog() != DialogResult.OK)
                     return null;
 
-                // 🔍 Validasyonlar
+                // Validasyonlar
                 if (string.IsNullOrWhiteSpace(txtName.Text))
                 {
                     MessageBox.Show("İsim boş olamaz.");
@@ -752,11 +784,23 @@ namespace GraffProjesi
                 return;
 
             var person = _people.FirstOrDefault(p => p.Id == id);
+            Node node = _graph.GetNode(id);
             if (person == null)
                 return;
 
+            // Komşu düğümleri al
+            var neighbors = _graph
+                .GetNeighbors(node)
+                .Select(n => n.Id)
+                .OrderBy(x => x)
+                .ToList();
+
+            string neighborText = neighbors.Any()
+            ? string.Join(", ", neighbors)
+            : "Yok";
+
             MessageBox.Show(
-                $"Id: {person.Id}\nAd Soyad: {person.Name}",
+                $"Id: {person.Id}\nAd Soyad: {person.Name}\nAktiflik: {node.Aktiflik:F2}\nEtkileşim: {node.Etkilesim}\nBağlantı Sayısı: {node.BaglantiSayisi}\nKomşu Düğümler: {neighborText}\n",
                 "Kişi Bilgisi",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
@@ -1134,51 +1178,57 @@ namespace GraffProjesi
         {
             if (cmbStartNode.SelectedItem == null)
             {
-                WriteToTerminal("Lütfen başlangıç düğümü seçiniz.\n\n");
+                WriteToTerminal("Lütfen başlangıç düğümü seçiniz.");
                 return;
             }
 
             ComboNodeItem selected = (ComboNodeItem)cmbStartNode.SelectedItem;
             int startId = selected.Id;
 
+            var sw = Stopwatch.StartNew(); // süre başlar
             BFSAlgorithm bfs = new BFSAlgorithm(_graph);
             bfs.Execute(startId);
+            sw.Stop();
 
-            WriteToTerminal("BFS ile erişilebilen kullanıcılar:\n");
-            WriteToTerminal($"Başlangıç düğümü: {selected.Text}\n\n");
+            WriteToTerminal("\n--- BFS Algoritması ---");
+            WriteToTerminal($"Başlangıç düğümü: {selected.Text}");
 
             foreach (int id in bfs.Result)
             {
                 var p = _people.FirstOrDefault(x => x.Id == id);
                 if (p != null)
-                    WriteToTerminal($"{p.Id} \n"); // - {p.Name} eklenebilir
+                    WriteToTerminal($"{p.Id}"); // - {p.Name} eklenebilir
             }
 
-            WriteToTerminal($"Toplam erişilen kullanıcı sayısı: {bfs.Result.Count}\n\n");
+            WriteToTerminal($"Toplam erişilen kullanıcı sayısı: {bfs.Result.Count}\n");
+            WriteToTerminal($"BFS çalışma süresi: {sw.Elapsed.TotalMilliseconds:F4} ms\n");
         }
         private void btnDFS_Click(object sender, EventArgs e)
         {
             if (cmbStartNode.SelectedItem == null)
             {
-                WriteToTerminal("Lütfen başlangıç düğümü seçiniz.\n");
+                WriteToTerminal("Lütfen başlangıç düğümü seçiniz.");
                 return;
             }
             ComboNodeItem selected = (ComboNodeItem)cmbStartNode.SelectedItem;
             int startId = selected.Id;
 
+            var sw = Stopwatch.StartNew();
             DFSAlgorithm dfs = new DFSAlgorithm(_graph);
             dfs.Execute(startId);
+            sw .Stop();
 
-            WriteToTerminal("\nDFS ile erişilebilen kullanıcılar:\n");
-            WriteToTerminal($"Başlangıç düğümü: {selected.Text}\n\n");
+            WriteToTerminal("\n--- DFS Algoritması ---");
+            WriteToTerminal($"Başlangıç düğümü: {selected.Text}");
 
             foreach (int id in dfs.Result)
             {
                 var p = _people.FirstOrDefault(x => x.Id == id);
-                WriteToTerminal($"{id} - {p?.Name}\n");
+                WriteToTerminal($"{id} - {p?.Name}");
             }
 
             WriteToTerminal($"Toplam erişilen kullanıcı sayısı: {dfs.Result.Count}\n");
+            WriteToTerminal($"DFS çalışma süresi: {sw.Elapsed.TotalMilliseconds:F4} ms\n");
         }
 
         private void btnDijkstra_Click(object sender, EventArgs e)
@@ -1192,12 +1242,12 @@ namespace GraffProjesi
             var startItem = (ComboNodeItem)cmbStartNode.SelectedItem;  // Seçilen başlangıç düğümünü al
             ComboNodeItem endItem = cmbEndNode.SelectedItem as ComboNodeItem;
 
+            var sw = Stopwatch.StartNew();
             var dijkstra = new DijkstraAlgorithm(_graph);  // Dijkstra algoritmasını çalıştır
             dijkstra.Execute(startItem.Id);
-            //txtTerminal.Clear();
-            WriteToTerminal("");
-            WriteToTerminal("- Dijkstra Algoritması -");
-            WriteToTerminal("");
+            sw.Stop();
+
+            WriteToTerminal("\n--- Dijkstra Algoritması ---");
 
             //  İKİ DÜĞÜM SEÇİLİ İSE
             if (endItem != null)
@@ -1209,7 +1259,7 @@ namespace GraffProjesi
 
                 if (path.Count <= 1)
                 {
-                    WriteToTerminal("Sonuç: Yol bulunamadı.\n");
+                    WriteToTerminal("Sonuç: Yol bulunamadı.");
                     return;
                 }
 
@@ -1232,7 +1282,7 @@ namespace GraffProjesi
                         WriteToTerminal($"{kvp.Key} - {person?.Name} : {kvp.Value:F2}");
                 }
             }
-            WriteToTerminal("\n");
+            WriteToTerminal($"\nDijkstra çalışma süresi: {sw.Elapsed.TotalMilliseconds:F4} ms\n");
         }
 
         /* Dijkstra algoritması, başlangıç düğümünden tüm düğümlere olan en kısa yolları hesaplarken;
@@ -1254,13 +1304,14 @@ namespace GraffProjesi
                 WriteToTerminal("Lütfen hedef düğümü seçiniz.");
                 return;
             }
-
+            var sw = Stopwatch.StartNew();
             // A* çalıştır
             var aStar = new AStarAlgorithm(_graph);
             aStar.Execute(startItem.Id, endItem.Id);
             var path = aStar.GetPath(endItem.Id);
+            sw.Stop();
 
-            WriteToTerminal("\n- A* Algoritması -");
+            WriteToTerminal("\n--- A* Algoritması ---");
             WriteToTerminal($"Başlangıç: {startItem.Text}");
             WriteToTerminal($"Hedef: {endItem.Text}");
 
@@ -1273,14 +1324,17 @@ namespace GraffProjesi
             WriteToTerminal("Sonuç: En Kısa Yol");
             WriteToTerminal("Yol: " + string.Join(" -> ", path));
             WriteToTerminal($"Toplam Maliyet: {aStar.TotalCost:F4}\n");
+            WriteToTerminal($"A* çalışma süresi: {sw.Elapsed.TotalMilliseconds:F4} ms\n");
         }
 
         private void btnConnectedComponents_Click(object sender, EventArgs e)
         {
+            var sw = Stopwatch.StartNew();
             var cc = new ConnectedComponentsAlgorithm(_graph);
             cc.Execute();
+            sw.Stop();
 
-            WriteToTerminal("\n- Bağlı Bileşenler (Topluluk Analizi) -");
+            WriteToTerminal("\n--- Bağlı Bileşenler Analizi ---");
             WriteToTerminal($"Toplam Topluluk Sayısı: {cc.Components.Count}\n");
 
             int index = 1;
@@ -1297,24 +1351,40 @@ namespace GraffProjesi
 
                 WriteToTerminal($"Topluluk {index} {type} - {component.Count} Kişi:");
                 WriteToTerminal("Üyeler: " + string.Join(", ", component));
-                WriteToTerminal("");
+                WriteToTerminal("\n");
                 index++;
             }
-            WriteToTerminal("\nAnaliz Tamamlandı.\n");
+            WriteToTerminal("Analiz Tamamlandı.\n");
+            WriteToTerminal($"Topluluk Analizi çalışma süresi: {sw.Elapsed.TotalMilliseconds:F4} ms\n");
+
         }
 
         // WELSH POWELL Kodları
         private void btnWelshPowell_Click(object sender, EventArgs e)
         {
-            // Eğer renklendirme açıksa kapat
+            // Welsh–Powell öncesi seçimleri sakla
+            _prevStartNodeId = _startNodeId;
+            _prevTargetNodeId = _targetNodeId;
+
+            // Seçilenlerin renklerini kapat
+            _startNodeId = null;
+            _targetNodeId = null;
+            _currentMode = EditMode.None;
+
+            // Eğer renklendirme açıksa
             if (_isColoringActive)
             {
                 _nodeColors = null;
                 _isColoringActive = false;
 
                 dgvColoring.Rows.Clear();
-                WriteToTerminal("Welsh–Powell renklendirme kapatıldı.");
 
+                _startNodeId = _prevStartNodeId; // Önceki başlangıç / hedef seçimini geri yükle
+                _targetNodeId = _prevTargetNodeId;
+                _prevStartNodeId = null;
+                _prevTargetNodeId = null;
+
+                WriteToTerminal("Welsh–Powell renklendirme kapatıldı.");
                 pbCanvas.Invalidate(); // Canvas'ı yeniden çiz
                 return;
             }
@@ -1326,12 +1396,12 @@ namespace GraffProjesi
                 return;
             }
 
-            // Welsh–Powell algoritmasını çalıştır
-            var coloring = new Coloring(_graph);
+            var sw = Stopwatch.StartNew(); // süre başlar
+            var coloring = new Coloring(_graph);  // Welsh–Powell algoritmasını çalıştır
             _nodeColors = coloring.ApplyWelshPowell();
+            sw.Stop(); // süre durur
+
             _isColoringActive = true;
-
-
             dgvColoring.Rows.Clear();      // Tabloyu temizle
 
             // Tabloyu RENK NUMARASINA GÖRE sıralı doldur
@@ -1341,10 +1411,10 @@ namespace GraffProjesi
             }
 
             WriteToTerminal("\n- Welsh–Powell Graf Renklendirme -\n");
-            WriteToTerminal($"Toplam kullanılan renk sayısı: {_nodeColors.Values.Distinct().Count()}");
-            WriteToTerminal("Aynı renge sahip düğümler birbirine komşu değildir.");
-            WriteToTerminal("\nRenklendirme tamamlandı.\n");
-
+            WriteToTerminal($"Toplam kullanılan renk sayısı: {_nodeColors.Values.Distinct().Count()}\n");
+            WriteToTerminal("Aynı renge sahip düğümler birbirine komşu değildir.\n");
+            WriteToTerminal("Renklendirme tamamlandı.\n");
+            WriteToTerminal($"Welsh–Powell çalışma süresi: {sw.Elapsed.TotalMilliseconds:F4} ms\n");
             pbCanvas.Invalidate(); // Canvas'ı yenile
         }
 
@@ -1363,5 +1433,147 @@ namespace GraffProjesi
             };
             return colors[(index - 1) % colors.Length];
         }
+        private void btnExportCsv_Click(object sender, EventArgs e) //DIŞARI aktarma (kaydetme)
+        {
+            try
+            {
+                string anaKlasor = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "DisariAktarilanGraf"
+                );
+
+                int kayitNo = GetNextKayitIndex(anaKlasor);
+                string kayitKlasoru = Path.Combine(anaKlasor, $"Kayit_{kayitNo}");
+
+                Directory.CreateDirectory(kayitKlasoru);
+
+                _graph.ExportToCsv(kayitKlasoru);
+                int dugumSayisi = _graph.GetAllNodes().Count();
+
+                WriteToTerminal(
+                    "Dışa aktarma tamamlandı.\n" +
+                    $"Kayıt adı: Kayit_{kayitNo} ({dugumSayisi} düğüm)\n" +
+                    $"Klasör: {kayitKlasoru}\n\n"
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Dışa Aktarma Hatası",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+        }
+        private void btnImportCsv_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (var dialog = new FolderBrowserDialog())
+                {
+                    dialog.Description = "İçe aktarılacak kayıt klasörünü seçin";
+
+                    string anaKlasor = Path.Combine(
+                        AppDomain.CurrentDomain.BaseDirectory,
+                        "DisariAktarilanGraf"
+                    );
+
+                    if (Directory.Exists(anaKlasor))
+                    {
+                        WriteToTerminal("Mevcut Kayıtlar:\n");
+
+                        foreach (var dir in Directory.GetDirectories(anaKlasor))
+                        {
+                            string nodesPath = Path.Combine(dir, "nodes.csv");
+
+                            if (File.Exists(nodesPath))
+                            {
+                                int nodeCount = File.ReadAllLines(nodesPath).Length - 1;
+                                WriteToTerminal(
+                                    $"{Path.GetFileName(dir)} ({nodeCount} düğüm)\n"
+                                );
+                            }
+                        }
+
+                        WriteToTerminal("\n");
+                    }
+
+                    string varsayilanKlasor = Path.Combine( // başlangıç klasörü ayarlıyoruz
+                        AppDomain.CurrentDomain.BaseDirectory,
+                        "DisariAktarilanGraf"
+                    );
+
+                    if (Directory.Exists(varsayilanKlasor))
+                        dialog.SelectedPath = varsayilanKlasor;
+
+                    if (dialog.ShowDialog() != DialogResult.OK)
+                        return;
+
+                    string secilenKlasor = dialog.SelectedPath;
+
+                    _graph.ImportFromCsv(secilenKlasor);
+
+                    // UI tarafını güncelle
+                    _people.Clear();
+                    _nodePositions.Clear();
+
+                    foreach (var n in _graph.GetAllNodes())
+                    {
+                        _people.Add(new Person
+                        {
+                            Id = n.Id,
+                            Name = n.Name
+                        });
+
+                        _nodePositions[n.Id] = n.Position;
+                    }
+
+                    FillPeopleList();
+                    UpdateNodeCombos();
+                    pbCanvas.Invalidate();
+
+                    WriteToTerminal(
+                        "İçe aktarma tamamlandı.\n" +
+                        $"Yüklenen kayıt: {Path.GetFileName(secilenKlasor)}\n" +
+                        $"Düğüm sayısı: {_graph.GetAllNodes().Count()}\n\n"
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "İçe Aktarma Hatası",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+        }
+
+        private int GetNextKayitIndex(string anaKlasor) // Her dışa aktardığımızda yeni dosya (silinen telafi edilir)
+        {
+            if (!Directory.Exists(anaKlasor))
+                return 1;
+
+            var kullanilanNumaralar = Directory.GetDirectories(anaKlasor)
+                .Select(d => Path.GetFileName(d))
+                .Where(name => name.StartsWith("Kayit_"))
+                .Select(name =>
+                {
+                    if (int.TryParse(name.Replace("Kayit_", ""), out int n))
+                        return n;
+                    return -1;
+                })
+                .Where(n => n > 0)
+                .ToList();
+
+            int i = 1;
+            while (kullanilanNumaralar.Contains(i))
+                i++;
+
+            return i;
+        }
+
     } // class kapanışı
 } // namespace kapanışı

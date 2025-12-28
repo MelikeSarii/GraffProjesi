@@ -59,6 +59,8 @@
             this.flpLeft = new System.Windows.Forms.FlowLayoutPanel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.btnExportCsv = new System.Windows.Forms.Button();
+            this.btnImportCsv = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -94,7 +96,7 @@
             this.lstPeople.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.lstPeople.FormattingEnabled = true;
             this.lstPeople.ItemHeight = 18;
-            this.lstPeople.Location = new System.Drawing.Point(121, 102);
+            this.lstPeople.Location = new System.Drawing.Point(121, 135);
             this.lstPeople.Name = "lstPeople";
             this.lstPeople.Size = new System.Drawing.Size(227, 184);
             this.lstPeople.TabIndex = 0;
@@ -362,7 +364,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.label1.Location = new System.Drawing.Point(78, 17);
+            this.label1.Location = new System.Drawing.Point(61, 17);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(136, 18);
             this.label1.TabIndex = 0;
@@ -398,11 +400,11 @@
             this.txtTerminal.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTerminal.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.txtTerminal.Location = new System.Drawing.Point(54, 33);
+            this.txtTerminal.Location = new System.Drawing.Point(45, 34);
             this.txtTerminal.Name = "txtTerminal";
             this.txtTerminal.ReadOnly = true;
             this.txtTerminal.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtTerminal.Size = new System.Drawing.Size(358, 813);
+            this.txtTerminal.Size = new System.Drawing.Size(404, 813);
             this.txtTerminal.TabIndex = 5;
             this.txtTerminal.Text = "";
             // 
@@ -412,7 +414,7 @@
             this.btnResetTerminal.AutoSize = true;
             this.btnResetTerminal.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.btnResetTerminal.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnResetTerminal.Location = new System.Drawing.Point(343, 0);
+            this.btnResetTerminal.Location = new System.Drawing.Point(365, 0);
             this.btnResetTerminal.Name = "btnResetTerminal";
             this.btnResetTerminal.Size = new System.Drawing.Size(69, 31);
             this.btnResetTerminal.TabIndex = 6;
@@ -448,12 +450,14 @@
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.btnExportCsv);
+            this.groupBox1.Controls.Add(this.btnImportCsv);
             this.groupBox1.Controls.Add(this.btnKucukGraf);
             this.groupBox1.Controls.Add(this.btnBuyukGraf);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.groupBox1.Location = new System.Drawing.Point(3, 3);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(463, 93);
+            this.groupBox1.Size = new System.Drawing.Size(463, 126);
             this.groupBox1.TabIndex = 4;
             this.groupBox1.TabStop = false;
             this.groupBox1.Enter += new System.EventHandler(this.groupBox1_Enter);
@@ -468,12 +472,34 @@
             this.label4.TabIndex = 3;
             this.label4.Text = "Graf Seçimi";
             // 
+            // btnExportCsv
+            // 
+            this.btnExportCsv.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnExportCsv.Location = new System.Drawing.Point(108, 89);
+            this.btnExportCsv.Name = "btnExportCsv";
+            this.btnExportCsv.Size = new System.Drawing.Size(123, 32);
+            this.btnExportCsv.TabIndex = 6;
+            this.btnExportCsv.Text = "Veri Saklama";
+            this.btnExportCsv.UseVisualStyleBackColor = true;
+            this.btnExportCsv.Click += new System.EventHandler(this.btnExportCsv_Click);
+            // 
+            // btnImportCsv
+            // 
+            this.btnImportCsv.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnImportCsv.Location = new System.Drawing.Point(237, 89);
+            this.btnImportCsv.Name = "btnImportCsv";
+            this.btnImportCsv.Size = new System.Drawing.Size(126, 32);
+            this.btnImportCsv.TabIndex = 9;
+            this.btnImportCsv.Text = "Veri Yükleme";
+            this.btnImportCsv.UseVisualStyleBackColor = true;
+            this.btnImportCsv.Click += new System.EventHandler(this.btnImportCsv_Click);
+            // 
             // label3
             // 
             this.label3.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.label3.Location = new System.Drawing.Point(133, 289);
+            this.label3.Location = new System.Drawing.Point(133, 322);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(202, 20);
             this.label3.TabIndex = 6;
@@ -494,9 +520,9 @@
             this.groupBox2.Controls.Add(this.btnAddEdge);
             this.groupBox2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.groupBox2.Location = new System.Drawing.Point(3, 312);
+            this.groupBox2.Location = new System.Drawing.Point(3, 345);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(463, 827);
+            this.groupBox2.Size = new System.Drawing.Size(463, 782);
             this.groupBox2.TabIndex = 3;
             this.groupBox2.TabStop = false;
             // 
@@ -514,7 +540,7 @@
             // 
             this.lblColoringTitle.AutoSize = true;
             this.lblColoringTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.lblColoringTitle.Location = new System.Drawing.Point(104, 319);
+            this.lblColoringTitle.Location = new System.Drawing.Point(93, 334);
             this.lblColoringTitle.Name = "lblColoringTitle";
             this.lblColoringTitle.Size = new System.Drawing.Size(255, 20);
             this.lblColoringTitle.TabIndex = 7;
@@ -542,13 +568,13 @@
             this.dgvColoring.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Column1,
             this.Column2});
-            this.dgvColoring.Location = new System.Drawing.Point(95, 342);
+            this.dgvColoring.Location = new System.Drawing.Point(95, 357);
             this.dgvColoring.Name = "dgvColoring";
             this.dgvColoring.RowHeadersVisible = false;
             this.dgvColoring.RowHeadersWidth = 51;
             this.dgvColoring.RowTemplate.Height = 24;
             this.dgvColoring.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.dgvColoring.Size = new System.Drawing.Size(273, 464);
+            this.dgvColoring.Size = new System.Drawing.Size(273, 404);
             this.dgvColoring.TabIndex = 5;
             // 
             // Column1
@@ -705,5 +731,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
         private System.Windows.Forms.DataGridViewTextBoxColumn colNodeID;
         private System.Windows.Forms.DataGridViewTextBoxColumn colDegree;
+        private System.Windows.Forms.Button btnExportCsv;
+        private System.Windows.Forms.Button btnImportCsv;
     }
 }
