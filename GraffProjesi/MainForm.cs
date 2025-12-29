@@ -26,6 +26,8 @@ namespace GraffProjesi
         private Graph _graph;
         private List<Person> _people;
 
+        private List<int> _shortestPath = null;   // En kısa yol çizimi için
+
         private Dictionary<int, int> _nodeColors; // Welsh–Powell renk sonucu: <NodeId, ColorIndex>
         private bool _isColoringActive = false;
         
@@ -172,7 +174,29 @@ namespace GraffProjesi
                     }
                 }
             }
-            // 2️ DÜĞÜMLERİ ÇİZ (RENKLİ)
+            // 2 EN KISA YOLU KIRMIZI ÇİZ (varsa)
+            if (_shortestPath != null && _shortestPath.Count > 1)
+            {
+                using (Pen redPen = new Pen(Color.Red, 2))
+                {
+                    for (int i = 0; i < _shortestPath.Count - 1; i++)
+                    {
+                        int fromId = _shortestPath[i];
+                        int toId = _shortestPath[i + 1];
+
+                        if (_nodePositions.ContainsKey(fromId) &&
+                            _nodePositions.ContainsKey(toId))
+                        {
+                            g.DrawLine(
+                                redPen,
+                                _nodePositions[fromId],
+                                _nodePositions[toId]
+                            );
+                        }
+                    }
+                }
+            }
+            // 3 DÜĞÜMLERİ ÇİZ (RENKLİ)
             foreach (var node in _nodePositions)
             {
                 Color fillColor = Color.SkyBlue; // Varsayılan
@@ -991,6 +1015,7 @@ namespace GraffProjesi
             WriteToTerminal("Sistem tamamen sıfırlandı. Yeni graf yükleyebilir veya düğüm ekleyebilirsiniz.\r\n");
 
             // Canvas'ı yeniden çizdir (boş)
+            _shortestPath = null;
             pbCanvas.Invalidate();
             UpdateNodeCombos(); // Listeleri sıfırlar
             _startNodeId = null;
@@ -1262,7 +1287,8 @@ namespace GraffProjesi
                     WriteToTerminal("Sonuç: Yol bulunamadı.");
                     return;
                 }
-
+                _shortestPath = path;
+                pbCanvas.Invalidate();
                 WriteToTerminal("Sonuç: En Kısa Yol");
                 WriteToTerminal("Yol: " + string.Join(" -> ", path));
                 WriteToTerminal($"Toplam Maliyet: {dijkstra.Distances[endItem.Id]:F2}");
@@ -1310,6 +1336,8 @@ namespace GraffProjesi
             aStar.Execute(startItem.Id, endItem.Id);
             var path = aStar.GetPath(endItem.Id);
             sw.Stop();
+            _shortestPath = path;
+            pbCanvas.Invalidate();
 
             WriteToTerminal("\n--- A* Algoritması ---");
             WriteToTerminal($"Başlangıç: {startItem.Text}");
@@ -1370,6 +1398,8 @@ namespace GraffProjesi
             _startNodeId = null;
             _targetNodeId = null;
             _currentMode = EditMode.None;
+
+            _shortestPath = null; // en kısa yolu da kapa
 
             // Eğer renklendirme açıksa
             if (_isColoringActive)
