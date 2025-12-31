@@ -872,7 +872,8 @@ namespace GraffProjesi
             button2.BackColor = SystemColors.Control;  //düğüm sil butonu
             btnAddEdge.BackColor = SystemColors.Control;
             btnDeleteEdge.BackColor = SystemColors.Control;
-            
+            btnUpdateNode.BackColor = SystemColors.Control;
+
             // Terminal temizle
             // txtTerminal.Clear();
 

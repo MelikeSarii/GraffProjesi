@@ -7,9 +7,7 @@ namespace GraffProjesi
 {
     public static class CsvPeopleLoader
     {
-        // kisiler_kucuk.csv veya kisiler_buyuk.csv dosyasını okur
-        // CSV formatı (noktalı virgül ile):
-        // Id;AdSoyad;Sehir;Rol;Yas;GuvenSkoru;GonulluSaat;AileSayisi;Cadir;Gida;Giysi;Psiko
+      
         public static List<Person> Load(string fileName)
         {
             var people = new List<Person>();
