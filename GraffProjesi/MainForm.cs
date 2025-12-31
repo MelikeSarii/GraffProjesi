@@ -898,6 +898,11 @@ namespace GraffProjesi
                     WriteToTerminal("Kenar silme modu aktif.\r\n");
                     break;
 
+                case EditMode.UpdateNode:
+                    btnUpdateNode.BackColor = Color.Khaki;
+                    WriteToTerminal("Düğüm güncelleme modu aktif.\r\n");
+                    break;
+
                 case EditMode.None:
                 default:
                     WriteToTerminal("Düzenleme modu kapalı.\r\n");
@@ -1397,7 +1402,7 @@ namespace GraffProjesi
             // Seçilenlerin renklerini kapat
             _startNodeId = null;
             _targetNodeId = null;
-            _currentMode = EditMode.None;
+            SetEditMode(EditMode.None);
 
             _shortestPath = null; // en kısa yolu da kapa
 
