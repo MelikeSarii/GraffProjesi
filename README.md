@@ -308,12 +308,26 @@ sequenceDiagram
     UI-->>User: Ekranda Göster
     deactivate UI
 ```
+---
+
+## 3. Sistem Mimarisi ve Nesne Yönelimli Tasarım (OOP)
+
+Bu projede nesne yönelimli tasarım (OOP) prensipleri esas alınarak, esnek ve geliştirilebilir bir mimari oluşturulmuştur. Uygulanan temel ilkeler şunlardır:
+
+* **Inheritance (Kalıtım):** `Algorithm` → `DijkstraAlgorithm`, `AStarAlgorithm`, `BFSAlgorithm`, `DFSAlgorithm`. Tüm özel algoritmalar, ortak veri yapılarını ve graf referansını temel `Algorithm` sınıfından miras alır.
+* **Polymorphism (Çok Biçimlilik):** `Execute()` metodunun her algoritma sınıfında farklı çalışma mantığına (BFS'de kuyruk, DFS'de yığın kullanımı gibi) göre `override` edilmesi.
+* **Encapsulation (Kapsülleme):** `Node` ve `Person` sınıflarındaki `Id`, `Name` gibi alanlara doğrudan erişim yerine, kontrollü erişim sağlayan özelliklerin (Properties) kullanılması.
+* **Interface Segregation (Arayüz Ayrımı):** `IAlgorithm` arayüzünün sadece çalıştırma işlevine odaklanması ve algoritmaların ihtiyaç duymadığı fazladan metotları barındırmaması.
+* **Single Responsibility Principle (Tek Sorumluluk):** `Graph` sınıfının sadece graf topolojisini yönetmesi, `CsvPeopleLoader` sınıfının ise sadece dosya okuma işlemini yapması.
+* **Composition over Inheritance:** `Graph` sınıfının içinde `Node` ve `Edge` nesnelerinin bir koleksiyon olarak barındırılması.
+* **Abstraction (Soyutlama):** `MainForm` arayüzünün algoritmanın iç detaylarını bilmeden sadece `Algorithm` soyut sınıfı üzerinden işlem yapması.
+
+---
 
 # 4. Algoritmalar
 
 Bu bölümde, projenin beynini oluşturan algoritmalar incelenmiştir. Her bir algoritma, sadece teorik tanımıyla değil, projedeki **spesifik kullanım amacı** ve **uygulama detayıyla** ele alınmıştır.
 
----
 
 ## 4.1 Breadth-First Search (BFS)
 
