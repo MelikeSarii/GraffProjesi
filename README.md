@@ -11,7 +11,7 @@
 | **Programlama Dili** | C# (.NET Framework / Windows Forms) |
 | **Teslim Tarihi** | Aralık 2025 |
 
-## Proje Ekibi (Geliştiriciler)
+## Proje Ekibi (23. Grup)
 
 | Öğrenci Adı Soyadı | Öğrenci Numarası | GitHub |
 | --- | --- | --- |
@@ -209,7 +209,7 @@ classDiagram
 ```
 ---
 
-## 1. Amaç ve Kapsam
+# 1. Amaç ve Kapsam
 
 Bu teknik dokümantasyon, **Graf Teorisi tabanlı Sosyal Ağ Analizi Uygulaması**'nın mimari iskeletini, algoritmik temellerini ve sistem davranışlarını tanımlamak üzere oluşturulmuştur. Rapor, sadece kodun nasıl çalıştığını değil, **neden** bu tasarım kararlarının alındığını da mühendislik perspektifiyle açıklamayı hedefler.
 
@@ -221,7 +221,7 @@ Doküman boyunca aşağıdaki kritik başlıklar ele alınacaktır:
 
 Bu kılavuz, sistemi geliştirecek veya inceleyecek teknik paydaşlar için bağlayıcı bir referans noktasıdır.
 
-## 2. Genel Mimari Yaklaşım
+# 2. Genel Mimari Yaklaşım
 
 Sistem, sürdürülebilirlik ve modülerlik esas alınarak, **Nesne Yönelimli Tasarım (OOP)** prensipleri üzerine inşa edilmiştir. Mimari kurgulanırken "Spagetti Kod" yapısından kaçınılmış, bunun yerine katmanlı ve sorumlulukları ayrıştırılmış bir yapı hedeflenmiştir.
 
@@ -233,11 +233,11 @@ Tasarım felsefesinin temel taşları şunlardır:
 
 Sistemin kalbinde, veriyi tutan ve yöneten **Graph** sınıfı bulunur; algoritmalar ise bu veriyi işleyen "ziyaretçiler" gibi davranır.
 
-## 3. Temel Sınıflar ve Sorumlulukları
+# 3. Temel Sınıflar ve Sorumlulukları
 
 Sistemin omurgasını oluşturan sınıflar, "Tek Sorumluluk Prensibi" (Single Responsibility Principle) gözetilerek tasarlanmıştır.
 
-### 3.1 Node
+## 3.1 Node
 
 **Node**, sosyal ağın en küçük yapı taşıdır; sistemdeki her bir "Kullanıcı" veya "Aktör" bu sınıf ile temsil edilir.
 
@@ -249,11 +249,11 @@ Sistemin omurgasını oluşturan sınıflar, "Tek Sorumluluk Prensibi" (Single R
 
 **Tasarım Notu:** Node sınıfı "aptal nesne" (dumb object) prensibine yakındır; iş mantığı içermez, sadece veri taşır.
 
-### 3.2 Edge
+## 3.2 Edge
 
 **Edge**, iki Node arasındaki anlamsal bağı ifade eder. Bu projede kenarlar **yönsüz (undirected)** olarak modellenmiş olup, sistemin en kritik parçası olan **dinamik ağırlık mekanizmasına** ev sahipliği yapar. Kenar ağırlığı sabit bir değer değil, bağladığı iki düğümün öznitelik farklarından türetilen hesaplanmış bir değerdir.
 
-### 3.3 Graph
+## 3.3 Graph
 
 **Graph**, sistemin veritabanı ve orkestra şefidir. Tüm düğümlerin ve kenarların yaşam döngüsü burada yönetilir.
 
@@ -263,13 +263,13 @@ Sistemin omurgasını oluşturan sınıflar, "Tek Sorumluluk Prensibi" (Single R
 * **Veri Sağlayıcı:** Algoritmaların ihtiyaç duyduğu ham veriyi (örneğin; "X düğümünün komşuları kim?") servis eder.
 * **Durum Kontrolü:** Grafın boş olup olmadığı veya belirli bir bağlantının varlığı gibi sorguları yanıtlar.
 
-### 3.4 Algorithm (Abstract / Interface)
+## 3.4 Algorithm (Abstract / Interface)
 
 Tüm graf algoritmaları için bir "sözleşme" niteliği taşıyan soyut yapıdır. BFS, DFS, Dijkstra gibi tüm türevler bu sınıftan miras alır.
 
 Bu yapı sayesinde ana program, hangi algoritmanın çalıştığını bilmek zorunda kalmaz; sadece `Execute()` komutunu gönderir (Polimorfizm). Bu, sisteme gelecekte eklenecek yeni algoritmalar için "tak-çıkar" esnekliği sağlar.
 
-### 3.5 Sistem İş Akışı (Sequence Diagram)
+## 3.5 Sistem İş Akışı (Sequence Diagram)
 
 Aşağıdaki diyagram, bir kullanıcının algoritma çalıştırdığında sistemin arka planda (UI -> Algoritma -> Graph) nasıl haberleştiğini özetlemektedir:
 
@@ -372,16 +372,8 @@ flowchart TD
 
 ### 4.1.5 Literatür İncelemesi
 
-## 1) BFS (Breadth-First Search) – Genişlik Öncelikli Arama
-
 **Köken ve literatür bağlamı:**
 BFS, graf üzerinde **katman katman** (başlangıç düğümüne olan mesafe artacak şekilde) dolaşan temel bir gezinme yöntemidir. Literatürde BFS’nin en önemli sonucu, **ağırlıksız graf** veya tüm kenar ağırlıkları eşit kabul edilen problemlerde **en kısa yolu** (en az kenar sayısı) garanti etmesidir. BFS’nin erken dönemde “labirentte en kısa çıkış yolu” problemi üzerinden yayımlanması, algoritmanın pratik problemlere (robotik, yönlendirme, routing vb.) hızlı adapte olmasını sağlamıştır. ([Jeff Erickson][1])
-
-**Temel fikir:**
-
-* Bir **kuyruk (queue)** kullanılır.
-* Önce başlangıca 1 adım uzak düğümler, sonra 2 adım uzak düğümler… şeklinde ilerlenir.
-* Bu katmanlı ilerleme BFS’yi, ağırlıksız graf üzerinde “en kısa yol” için doğal çözüm yapar.
   
 **Uygulamalar:**
 
@@ -389,121 +381,6 @@ BFS, graf üzerinde **katman katman** (başlangıç düğümüne olan mesafe art
 * **Bağlı bileşen** bulma (undirected graf)
 * Sosyal ağlarda yakınlık/mesafe analizleri, oyunlarda grid pathfinding’in temel hali
 
-
----
-
-## 2) DFS (Depth-First Search) – Derinlik Öncelikli Arama
-
-**Köken ve literatür bağlamı:**
-DFS, grafı “mümkün olduğunca derine inerek” dolaşır. DFS fikri çok erken dönemlerden beri bilinse de, DFS’nin modern algoritma literatüründeki gücü; **lineer zamanlı** (O(V+E)) birçok kritik problemin (ör. güçlü bağlı bileşenler, biconnected yapılar vb.) temel yapı taşı olmasıyla öne çıkmıştır. Bu bağlamda Tarjan’ın DFS tabanlı lineer algoritmaları, DFS’nin teorik önemini iyice pekiştirmiştir. ([epubs.siam.org][3])
-
-**Temel fikir:**
-
-* **Stack** (ya da recursion) mantığıyla çalışır.
-* Bir düğüme gidilir, oradan komşularına gidilir, tıkanınca geri dönülür (backtracking).
-* DFS ağacı/ormanı ve keşif zamanları gibi kavramlar ileri analizlerde kullanılır.
-
-
-
-**Uygulamalar:**
-
-* Topolojik sıralama (DAG)
-* Döngü tespiti
-* (Directed graph) güçlü bağlı bileşenler (SCC) için temel yaklaşım
-* Bağlı bileşen / erişilebilirlik analizi
-
----
-
-## 3) Bağlı Bileşen (Connected Components)
-
-**Literatür bağlamı ve tanım:**
-Bir grafın **bağlı bileşenleri**, (özellikle **undirected** graf için) birbirine yol ile ulaşılabilen düğüm kümeleridir. Bu problem, grafın “kaç parçadan oluştuğunu” bulmanın en temel yoludur ve büyük ölçekli ağ analizlerinde (sosyal ağ, iletişim ağı, modüler yapı incelemesi) sıkça başlangıç adımıdır.
-
-**Temel yaklaşım:**
-
-* Her ziyaret edilmemiş düğümden BFS veya DFS başlatılır.
-* Her başlatma, **bir bağlı bileşeni** tamamen keşfeder.
-* Kaç kez başlatıldıysa o kadar bileşen vardır.
-
-
-
-**Not (Directed graf):**
-Directed graf için “bağlılık” ikiye ayrılır:
-
-* **Zayıf bağlılık (weakly connected):** yönleri yok sayıp bileşen bulma
-* **Güçlü bağlılık (strongly connected):** her düğümden her düğüme yönlü yol olmalı (SCC). SCC için DFS tabanlı Tarjan/Kosaraju gibi algoritmalar literatürde standarttır. ([epubs.siam.org][3])
-
-
-
----
-
-## 4) Dijkstra – En Kısa Yol (Ağırlıklı, Negatif Olmayan)
-
-**Köken ve literatür bağlamı:**
-Dijkstra algoritması, ağırlıkları **negatif olmayan** (≥0) graflarda tek kaynaktan en kısa yolları bulan klasik yöntemdir. Dijkstra’nın 1959 tarihli çalışması, modern en kısa yol literatürünün temel taşlarındandır ve sonraki pek çok optimizasyonun (ör. priority queue, Fibonacci heap vb.) çıkış noktası olmuştur. ([CWI][5])
-
-**Temel fikir:**
-
-* “Şu ana kadar bulunan en kısa” mesafeyi kesinleştirerek büyüyen bir küme oluşturur.
-* Her adımda, geçici mesafesi en küçük olan düğüm seçilir ve komşular **relaxation** ile güncellenir.
-* Öncelik kuyruğu (min-heap) kullanımı pratikte standarda dönüşmüştür.
-
-**Doğruluk şartı:**
-
-* Kenar ağırlıkları **negatif olmamalı**. Negatif ağırlık varsa Bellman–Ford gibi yöntemler gerekir.
-
-
-**Uygulamalar:**
-
-* Yol bulma (harita), ağ yönlendirme, lojistik planlama
-* A* için temel “g(n)” alt yapısı (A* aslında Dijkstra’nın heuristik eklenmiş hali gibi düşünülebilir)
-
----
-
-## 5) A* (A-Star) – Heuristik En Kısa Yol Araması
-
-**Köken ve literatür bağlamı:**
-A* algoritması, Hart–Nilsson–Raphael (1968) tarafından formel temele oturtulmuştur. A*’ın ana fikri, en kısa yolu ararken sadece “şimdiye kadarki maliyet”i değil, hedefe kalan “tahmini maliyet”i de hesaba katarak aramayı yönlendirmektir. Bu sayede doğru heuristik ile Dijkstra’ya göre çok daha az düğüm genişletip aynı optimal sonuca ulaşabilir. ([Stanford Yapay Zeka Laboratuvarı][6])
-
-**Temel fikir (f(n)=g(n)+h(n)):**
-
-* **g(n):** başlangıçtan n’ye gerçek maliyet
-* **h(n):** n’den hedefe tahmini maliyet (heuristic)
-* **f(n):** genişletme önceliği
-
-**Optimalite koşulları:**
-
-* Eğer h(n) **admissible** (asla gerçek en kısa kalan maliyeti aşmayan) ise A* **optimal** çözüm verir.
-* h(n) ayrıca **consistent/monotone** olursa (pratikte sık istenir) tekrar açma sayısı azalır, implementasyon sadeleşir.
-
-
-**Uygulamalar:**
-
-* Oyunlarda pathfinding (grid haritalar), robotik, navigasyon
-* Harita/rota motorları (heuristik çoğu zaman “kuş uçuşu mesafe” benzeri)
-
----
-
-## 6) Welsh–Powell – Graf Boyama İçin Açgözlü Heuristik
-
-**Köken ve literatür bağlamı:**
-Welsh–Powell (1967), graf boyama problemine (chromatic number) pratik bir **üst sınır** veren, derecelere dayalı **greedy** bir yaklaşım sunar. Graf boyama NP-zor olduğundan, Welsh–Powell gibi heuristikler özellikle zaman çizelgeleme (timetabling), kaynak atama ve çakışma problemlerinde yaygın şekilde kullanılır. ([OUP Academic][7])
-
-**Temel fikir:**
-
-1. Düğümleri dereceye göre azalan sırala.
-2. Sırayla gez: aynı renge boyanabilecek (aralarında kenar olmayan) düğümleri aynı renge boya.
-3. Boyanamayanlar için yeni renk aç.
-
-**Özellikler:**
-
-* **Optimal** renk sayısı garanti edilmez; amaç hızlı, makul çözüm üretmektir.
-* Sıralama stratejisi (dereceye göre) pratikte sonucu etkiler.
-
-**Uygulamalar:**
-
-* Ders programı / sınav programı, görev çizelgeleme
-* Frekans atama, register allocation (derleyicilerde) gibi çatışma grafı problemleri
 ---
 
 ## 4.2 Depth-First Search (DFS)
@@ -556,7 +433,15 @@ flowchart TD
 
 ### 4.2.5 Literatür İncelemesi
 
-Akademik çalışmalarda DFS; topolojik sıralama, güçlü bağlı bileşenlerin (Strongly Connected Components) bulunması ve labirent çözme algoritmalarının temelini oluşturur.
+**Köken ve literatür bağlamı:**
+DFS, grafı “mümkün olduğunca derine inerek” dolaşır. DFS fikri çok erken dönemlerden beri bilinse de, DFS’nin modern algoritma literatüründeki gücü; **lineer zamanlı** (O(V+E)) birçok kritik problemin (ör. güçlü bağlı bileşenler, biconnected yapılar vb.) temel yapı taşı olmasıyla öne çıkmıştır. Bu bağlamda Tarjan’ın DFS tabanlı lineer algoritmaları, DFS’nin teorik önemini iyice pekiştirmiştir. ([epubs.siam.org][3])
+
+**Uygulamalar:**
+
+* Topolojik sıralama (DAG)
+* Döngü tespiti
+* (Directed graph) güçlü bağlı bileşenler (SCC) için temel yaklaşım
+* Bağlı bileşen / erişilebilirlik analizi
 
 ---
 
@@ -621,7 +506,18 @@ flowchart TD
 
 ### 4.3.5 Literatür İncelemesi
 
-1956'da Edsger W. Dijkstra tarafından geliştirilen bu yöntem, günümüzde OSPF gibi internet yönlendirme protokollerinden Google Maps'e kadar geniş bir yelpazede endüstri standardıdır.
+**Köken ve literatür bağlamı:**
+Dijkstra algoritması, ağırlıkları **negatif olmayan** (≥0) graflarda tek kaynaktan en kısa yolları bulan klasik yöntemdir. Dijkstra’nın 1959 tarihli çalışması, modern en kısa yol literatürünün temel taşlarındandır ve sonraki pek çok optimizasyonun (ör. priority queue, Fibonacci heap vb.) çıkış noktası olmuştur. ([CWI][5])
+
+**Doğruluk şartı:**
+
+* Kenar ağırlıkları **negatif olmamalı**. Negatif ağırlık varsa Bellman–Ford gibi yöntemler gerekir.
+
+
+**Uygulamalar:**
+
+* Yol bulma (harita), ağ yönlendirme, lojistik planlama
+* A* için temel “g(n)” alt yapısı (A* aslında Dijkstra’nın heuristik eklenmiş hali gibi düşünülebilir)
 
 ---
 
@@ -689,7 +585,25 @@ flowchart TD
 
 ### 4.4.5 Literatür İncelemesi
 
-A*, yapay zeka (AI) ve robotik alanında en popüler yol bulma algoritmasıdır. Performansı tamamen seçilen Heuristic fonksiyonunun kalitesine (Admissibility) bağlıdır.
+**Köken ve literatür bağlamı:**
+A* algoritması, Hart–Nilsson–Raphael (1968) tarafından formel temele oturtulmuştur. A*’ın ana fikri, en kısa yolu ararken sadece “şimdiye kadarki maliyet”i değil, hedefe kalan “tahmini maliyet”i de hesaba katarak aramayı yönlendirmektir. Bu sayede doğru heuristik ile Dijkstra’ya göre çok daha az düğüm genişletip aynı optimal sonuca ulaşabilir. ([Stanford Yapay Zeka Laboratuvarı][6])
+
+**Temel fikir (f(n)=g(n)+h(n)):**
+
+* **g(n):** başlangıçtan n’ye gerçek maliyet
+* **h(n):** n’den hedefe tahmini maliyet (heuristic)
+* **f(n):** genişletme önceliği
+
+**Optimalite koşulları:**
+
+* Eğer h(n) **admissible** (asla gerçek en kısa kalan maliyeti aşmayan) ise A* **optimal** çözüm verir.
+* h(n) ayrıca **consistent/monotone** olursa (pratikte sık istenir) tekrar açma sayısı azalır, implementasyon sadeleşir.
+
+
+**Uygulamalar:**
+
+* Oyunlarda pathfinding (grid haritalar), robotik, navigasyon
+* Harita/rota motorları (heuristik çoğu zaman “kuş uçuşu mesafe” benzeri)
 
 ---
 
@@ -755,7 +669,18 @@ flowchart TD
 
 ### 4.5.5 Literatür İncelemesi
 
-Bu algoritma, frekans atama problemleri, ders programı çizelgeleme ve harita renklendirme gibi "Çakışma Yönetimi" gerektiren alanlarda referans modeldir.
+**Köken ve literatür bağlamı:**
+Welsh–Powell (1967), graf boyama problemine (chromatic number) pratik bir **üst sınır** veren, derecelere dayalı **greedy** bir yaklaşım sunar. Graf boyama NP-zor olduğundan, Welsh–Powell gibi heuristikler özellikle zaman çizelgeleme (timetabling), kaynak atama ve çakışma problemlerinde yaygın şekilde kullanılır. ([OUP Academic][7])
+
+**Özellikler:**
+
+* **Optimal** renk sayısı garanti edilmez; amaç hızlı, makul çözüm üretmektir.
+* Sıralama stratejisi (dereceye göre) pratikte sonucu etkiler.
+
+**Uygulamalar:**
+
+* Ders programı / sınav programı, görev çizelgeleme
+* Frekans atama, register allocation (derleyicilerde) gibi çatışma grafı problemleri
 
 ---
 
@@ -812,7 +737,20 @@ flowchart TD
 
 ### 4.6.5 Literatür İncelemesi
 
-Bağlı bileşen analizi, virüs yayılım simülasyonlarında karantina bölgelerini belirlemek veya sosyal medyadaki yankı odalarını (echo chambers) tespit etmek için kullanılan temel metriktir.
+**Literatür bağlamı ve tanım:**
+Bir grafın **bağlı bileşenleri**, (özellikle **undirected** graf için) birbirine yol ile ulaşılabilen düğüm kümeleridir. Bu problem, grafın “kaç parçadan oluştuğunu” bulmanın en temel yoludur ve büyük ölçekli ağ analizlerinde (sosyal ağ, iletişim ağı, modüler yapı incelemesi) sıkça başlangıç adımıdır.
+
+**Temel yaklaşım:**
+
+* Her ziyaret edilmemiş düğümden BFS veya DFS başlatılır.
+* Her başlatma, **bir bağlı bileşeni** tamamen keşfeder.
+* Kaç kez başlatıldıysa o kadar bileşen vardır.
+
+**Not (Directed graf):**
+Directed graf için “bağlılık” ikiye ayrılır:
+
+* **Zayıf bağlılık (weakly connected):** yönleri yok sayıp bileşen bulma
+* **Güçlü bağlılık (strongly connected):** her düğümden her düğüme yönlü yol olmalı (SCC). SCC için DFS tabanlı Tarjan/Kosaraju gibi algoritmalar literatürde standarttır. ([epubs.siam.org][3])
 
 ---
 
@@ -1177,3 +1115,46 @@ Proje süresince yapılan performans testleri ve analizler, doğru veri yapılar
 Bu projenin hayata geçirilmesi sürecinde bizlere modern yazılım mühendisliği vizyonunu katan, teorik ve pratik bilgileriyle yolumuzu aydınlatan **Kocaeli Üniversitesi Bilişim Sistemleri Mühendisliği Bölümü**'ndeki tüm değerli hocalarımıza teşekkür ederiz.
 
 Özellikle; ders ve proje kapsamındaki rehberliği, değerli yönlendirmeleri ve bizlere kazandırdığı akademik bakış açısından dolayı Sayın **Dr. Öğr. Üyesi Samet Diri** hocamıza en içten teşekkürlerimizi ve saygılarımızı sunarız.
+
+## Kaynakça
+
+[1] Jeff Erickson,  
+*Algorithms*, University of Illinois at Urbana-Champaign.  
+BFS ve temel graf dolaşma algoritmaları bölümü.  
+URL: https://jeffe.cs.illinois.edu/teaching/algorithms/  
+(Erişim Tarihi: 2025)
+
+[2] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein,  
+*Introduction to Algorithms*, 3rd Edition, MIT Press, 2009.  
+BFS, DFS ve bağlı bileşenler konuları.
+
+[3] Robert Tarjan,  
+“Depth-First Search and Linear Graph Algorithms”,  
+*SIAM Journal on Computing*, Vol. 1, No. 2, 1972.  
+DFS tabanlı bağlı bileşen ve güçlü bağlı bileşen algoritmaları.  
+URL: https://epubs.siam.org/doi/10.1137/0201010
+
+[4] Udi Manber,  
+*Introduction to Algorithms: A Creative Approach*, Addison-Wesley, 1989.  
+Graf dolaşma ve bağlı bileşen kavramları.
+
+[5] E. W. Dijkstra,  
+“A Note on Two Problems in Connexion with Graphs”,  
+*Numerische Mathematik*, Vol. 1, 1959.  
+Dijkstra en kısa yol algoritmasının özgün çalışması.  
+URL: https://www.cwi.nl/~dikstra/
+
+[6] Peter E. Hart, Nils J. Nilsson, Bertram Raphael,  
+“A Formal Basis for the Heuristic Determination of Minimum Cost Paths”,  
+*IEEE Transactions on Systems Science and Cybernetics*, 1968.  
+A* (A-Star) algoritmasının temel çalışması.  
+URL: https://ai.stanford.edu/~nilsson/OnlinePubs-Nils/PublishedPapers/astar.pdf
+
+[7] Welsh, D. J. A., Powell, M. B.,  
+“An Upper Bound for the Chromatic Number of a Graph and Its Application to Timetabling Problems”,  
+*The Computer Journal*, Vol. 10, 1967.  
+Welsh–Powell graf boyama algoritması.  
+URL: https://academic.oup.com/comjnl/article/10/1/85/337552
+
+---
+
